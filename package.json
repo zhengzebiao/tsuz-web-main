@@ -1,0 +1,33 @@
+{
+  "name": "tsuz-web-main",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@8.15.9",
+  "scripts": {
+    "dev": "pnpm --filter tsuz-web-main-main dev",
+    "build": "turbo run build",
+    "lint": "eslint . --max-warnings 0 && turbo run lint",
+    "test": "turbo run test",
+    "test:e2e": "playwright test",
+    "format": "prettier --ignore-unknown --write package.json pnpm-workspace.yaml .github/workflows/ci.yml .github/workflows/deploy.yml prettier.config.js",
+    "format:check": "prettier --ignore-unknown --check package.json pnpm-workspace.yaml .github/workflows/ci.yml .github/workflows/deploy.yml prettier.config.js",
+    "docker:build": "docker build -t tsuz-web-main:${APP_VERSION:-local} .",
+    "docker:run": "docker run --rm -p 7200:80 tsuz-web-main:${APP_VERSION:-local}",
+    "compose:up": "docker compose up --build",
+    "compose:down": "docker compose down"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.21.0",
+    "@playwright/test": "^1.51.1",
+    "@types/node": "^20.17.57",
+    "eslint": "^9.21.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.19",
+    "globals": "^16.0.0",
+    "prettier": "^3.5.3",
+    "turbo": "^2.5.3",
+    "typescript-eslint": "^8.26.1",
+    "typescript": "^5.8.3"
+  }
+}
