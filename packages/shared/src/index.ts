@@ -9,12 +9,13 @@ export interface CurrentUser {
 }
 
 export interface LoginCredentials {
-  username: string;
+  email: string;
   password: string;
 }
 
 export interface AuthSession {
   accessToken: string;
+  refreshToken: string;
   expiresAt: string;
   user: CurrentUser;
 }

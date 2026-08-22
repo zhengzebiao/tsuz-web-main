@@ -1,6 +1,7 @@
 export interface CreateApiClientOptions {
   baseUrl: string;
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
+  refreshAccessToken?: () => void | Promise<void>;
   onUnauthorized?: (response: Response) => void | Promise<void>;
   fetcher?: typeof fetch;
   defaultHeaders?: HeadersInit;
@@ -9,6 +10,7 @@ export interface CreateApiClientOptions {
 export interface ApiRequestOptions extends Omit<RequestInit, "body"> {
   query?: Record<string, string | number | boolean | null | undefined>;
   body?: unknown;
+  skipAuthRefresh?: boolean;
 }
 
 export interface ApiClient {
@@ -36,13 +38,18 @@ export class ApiError extends Error {
 
 export function createApiClient(options: CreateApiClientOptions): ApiClient {
   const fetcher = options.fetcher ?? globalThis.fetch?.bind(globalThis);
+  let refreshPromise: Promise<void> | undefined;
 
   if (!fetcher) {
     throw new Error("createApiClient requires a fetch implementation.");
   }
 
-  async function request<T = unknown>(path: string, requestOptions: ApiRequestOptions = {}): Promise<T> {
-    const { query, body, headers, ...init } = requestOptions;
+  async function request<T = unknown>(
+    path: string,
+    requestOptions: ApiRequestOptions = {},
+    hasRetriedAfterRefresh = false
+  ): Promise<T> {
+    const { query, body, headers, skipAuthRefresh, ...init } = requestOptions;
     const requestHeaders = new Headers(options.defaultHeaders);
 
     if (headers) {
@@ -67,7 +74,23 @@ export function createApiClient(options: CreateApiClientOptions): ApiClient {
     const response = await fetcher(resolveUrl(options.baseUrl, path, query), requestInit);
     const data = await parseResponse(response);
 
-    if (response.status === 401) {
+    if (response.status === 401 && !skipAuthRefresh && !hasRetriedAfterRefresh && options.refreshAccessToken) {
+      const currentAccessToken = await options.getAccessToken?.();
+
+      if (currentAccessToken && currentAccessToken !== accessToken) {
+        return request(path, requestOptions, true);
+      }
+
+      const refreshed = await refreshAccessToken(response);
+
+      if (refreshed) {
+        return request(path, requestOptions, true);
+      }
+
+      throw new ApiError("API request failed with status " + response.status, response.status, response, data);
+    }
+
+    if (response.status === 401 && !skipAuthRefresh) {
       await options.onUnauthorized?.(response);
     }
 
@@ -76,6 +99,27 @@ export function createApiClient(options: CreateApiClientOptions): ApiClient {
     }
 
     return data as T;
+  }
+
+  async function refreshAccessToken(response: Response) {
+    if (!refreshPromise) {
+      refreshPromise = Promise.resolve()
+        .then(() => options.refreshAccessToken!())
+        .catch(async (error) => {
+          await options.onUnauthorized?.(response);
+          throw error;
+        })
+        .finally(() => {
+          refreshPromise = undefined;
+        });
+    }
+
+    try {
+      await refreshPromise;
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   return {

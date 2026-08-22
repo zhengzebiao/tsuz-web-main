@@ -125,8 +125,10 @@ There are three environment layers:
 | `apps/main/src/pages/LoginPage.tsx` | Demo login page |
 | `apps/main/src/pages/LoginPage.test.tsx` | Testing Library coverage for the login surface |
 | `apps/main/src/stores/auth.store.ts` | Zustand auth state and host-to-sub-app auth bridge |
-| `apps/main/src/services/auth.service.ts` | Demo auth service; replace internals when connecting a real backend |
-| `apps/main/src/services/api-client.ts` | Host API client factory using the shared auth bridge |
+| `apps/main/src/services/auth.service.ts` | Host JWT auth service for email login, refresh, logout, and current-user mapping |
+| `apps/main/src/services/auth-api.ts` | Host-owned auth endpoint constructors for the supported `/auth/*` API |
+| `apps/main/src/services/auth-session.ts` | Session-scoped access/refresh token storage and expiry handling |
+| `apps/main/src/services/api-client.ts` | Host API client factory with token and refresh integration |
 | `apps/main/src/providers/AppProviders.tsx` | React Query and Router providers |
 | `apps/main/src/micro-apps/config.ts` | Pure qiankun app config helpers and env-driven entry resolution |
 | `apps/main/src/micro-apps/registry.ts` | qiankun side-effect registration and start guard |
@@ -147,13 +149,13 @@ There are three environment layers:
 
 - `@tsuz/shared` owns reusable types, constants, and utilities. It intentionally avoids auth implementation and business logic.
 - `@tsuz/ui` exposes small React UI primitives used by the host and sub app templates.
-- `@tsuz/api` exposes `createApiClient`, a generic request wrapper that can read access tokens from host/sub-app auth props.
+- `@tsuz/api` exposes `createApiClient`, a generic request wrapper that can read access tokens and coordinate an injected single-flight refresh callback; it does not own business endpoints or token storage.
 
 The app consumes these packages via `workspace:*` dependencies plus source aliases in `apps/main/tsconfig.json` and `apps/main/vite.config.ts`, so local development does not require prebuilding packages.
 
 ## Auth and Micro-App Props
 
-The host owns login state. The qiankun registry passes these props to sub applications through the shared `MicroAppProps` contract:
+The host owns login state. The host calls the backend email-login endpoint and keeps the access/refresh token session. The qiankun registry passes these props to sub applications through the shared `MicroAppProps` contract:
 
 - `apiBaseUrl`
 - `getAccessToken`

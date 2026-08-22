@@ -15,8 +15,8 @@ afterEach(() => {
 });
 
 describe("LoginPage", () => {
-  test("renders demo credentials and prefilled fields", async () => {
-    const user = userEvent.setup();
+  test("renders the email login form with the test account prefilled", async () => {
+    const user = userEvent.setup({ delay: null });
 
     render(
       <MemoryRouter>
@@ -26,15 +26,14 @@ describe("LoginPage", () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByText("演示账号")).toBeInTheDocument();
-    expect(screen.getByText("用户名：admin / 密码：password123")).toBeInTheDocument();
-    expect(screen.getByLabelText("用户名")).toHaveValue("admin");
+    expect(screen.queryByText("演示账号")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("邮箱")).toHaveValue("admin@example.com");
     expect(screen.getByLabelText("密码")).toHaveValue("password123");
     expect(screen.getByRole("button", { name: /登\s*录/ })).toBeEnabled();
 
-    await user.clear(screen.getByLabelText("用户名"));
-    await user.type(screen.getByLabelText("用户名"), "operator");
+    await user.clear(screen.getByLabelText("邮箱"));
+    await user.type(screen.getByLabelText("邮箱"), "operator@example.com");
 
-    expect(screen.getByLabelText("用户名")).toHaveValue("operator");
+    expect(screen.getByLabelText("邮箱")).toHaveValue("operator@example.com");
   });
 });

@@ -1,4 +1,4 @@
-import { LockOutlined, UserOutlined } from "@ant-design/icons";
+import { LockOutlined, MailOutlined } from "@ant-design/icons";
 import { Alert, App, Button, Form, Input, Typography } from "antd";
 import { useLocation, useNavigate } from "react-router-dom";
 import type { LoginCredentials } from "@tsuz/shared";
@@ -54,31 +54,24 @@ export default function LoginPage() {
               A
             </div>
             <Typography.Title level={2}>欢迎登录</Typography.Title>
-            <Typography.Text type="secondary">请使用用户名登录管理后台</Typography.Text>
+            <Typography.Text type="secondary">请使用邮箱登录管理后台</Typography.Text>
           </div>
 
-          <Alert
-            className="login-demo-alert"
-            message="演示账号"
-            description="用户名：admin / 密码：password123"
-            type="info"
-            showIcon
-          />
           {error ? <Alert className="login-error-alert" message={error} type="error" showIcon /> : null}
 
           <Form<LoginCredentials>
             layout="vertical"
             requiredMark={false}
             size="large"
-            initialValues={{ username: "admin", password: "password123" }}
+            initialValues={{ email: "admin@example.com", password: "password123" }}
             onFinish={handleFinish}
           >
             <Form.Item
-              label="用户名"
-              name="username"
-              rules={[{ required: true, message: "请输入用户名" }]}
+              label="邮箱"
+              name="email"
+              rules={[{ required: true, message: "请输入邮箱" }, { type: "email", message: "请输入有效邮箱" }]}
             >
-              <Input prefix={<UserOutlined />} autoComplete="username" placeholder="请输入用户名" />
+              <Input prefix={<MailOutlined />} autoComplete="username" placeholder="请输入邮箱" />
             </Form.Item>
             <Form.Item
               label="密码"
@@ -116,5 +109,3 @@ function getRedirectPath(state: unknown) {
 function isRedirectState(value: unknown): value is RedirectState {
   return typeof value === "object" && value !== null && "from" in value;
 }
-
-export { getRedirectPath };

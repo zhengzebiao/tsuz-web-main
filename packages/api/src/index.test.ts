@@ -56,4 +56,131 @@ describe("createApiClient", () => {
     await expect(client.get("/private")).rejects.toBeInstanceOf(ApiError);
     expect(unauthorized).toBe(true);
   });
+
+  test("refreshes an expired token and retries the original request once", async () => {
+    let accessToken = "expired-token";
+    const requests: Array<{ token: string | null; path: string }> = [];
+    let refreshCalls = 0;
+    const client = createApiClient({
+      baseUrl: "/api",
+      getAccessToken: () => accessToken,
+      refreshAccessToken: async () => {
+        refreshCalls += 1;
+        accessToken = "fresh-token";
+      },
+      fetcher: async (input, init) => {
+        requests.push({
+          token: new Headers(init?.headers).get("Authorization"),
+          path: new URL(String(input), "http://tsu.local").pathname
+        });
+
+        if (requests.length === 1) {
+          return new Response(JSON.stringify({ message: "Expired" }), {
+            status: 401,
+            headers: { "Content-Type": "application/json" }
+          });
+        }
+
+        return new Response(JSON.stringify({ ok: true }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+    });
+
+    await expect(client.get("/private")).resolves.toEqual({ ok: true });
+    expect(refreshCalls).toBe(1);
+    expect(requests).toEqual([
+      { token: "Bearer expired-token", path: "/api/private" },
+      { token: "Bearer fresh-token", path: "/api/private" }
+    ]);
+  });
+
+  test("shares one refresh request across concurrent unauthorized calls", async () => {
+    let accessToken = "expired-token";
+    let refreshCalls = 0;
+    let requestCalls = 0;
+    let resolveRefresh: (() => void) | undefined;
+    const refreshStarted = new Promise<void>((resolve) => {
+      resolveRefresh = resolve;
+    });
+    let resolveSecondRequest: (() => void) | undefined;
+    const secondRequestStarted = new Promise<void>((resolve) => {
+      resolveSecondRequest = resolve;
+    });
+    const client = createApiClient({
+      baseUrl: "/api",
+      getAccessToken: () => accessToken,
+      refreshAccessToken: () => {
+        refreshCalls += 1;
+        resolveRefresh?.();
+        return new Promise<void>((resolve) => {
+          setTimeout(() => {
+            accessToken = "fresh-token";
+            resolve();
+          }, 0);
+        });
+      },
+      fetcher: async (_input, init) => {
+        requestCalls += 1;
+        const token = new Headers(init?.headers).get("Authorization");
+
+        if (token === "Bearer expired-token") {
+          if (requestCalls === 2) {
+            resolveSecondRequest?.();
+          }
+          return new Response(null, { status: 401 });
+        }
+
+        return new Response(JSON.stringify({ token }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+    });
+
+    const first = client.get<{ token: string }>("/first");
+    await refreshStarted;
+    const second = client.get<{ token: string }>("/second");
+    await secondRequestStarted;
+    const results = await Promise.all([first, second]);
+
+    expect(refreshCalls).toBe(1);
+    expect(requestCalls).toBe(4);
+    expect(results).toEqual([{ token: "Bearer fresh-token" }, { token: "Bearer fresh-token" }]);
+  });
+
+  test("does not refresh again when the retried request remains unauthorized", async () => {
+    let refreshCalls = 0;
+    let unauthorizedCalls = 0;
+    const client = createApiClient({
+      baseUrl: "/api",
+      getAccessToken: () => "still-invalid",
+      refreshAccessToken: () => {
+        refreshCalls += 1;
+      },
+      onUnauthorized: () => {
+        unauthorizedCalls += 1;
+      },
+      fetcher: async () => new Response(null, { status: 401 })
+    });
+
+    await expect(client.get("/private")).rejects.toBeInstanceOf(ApiError);
+    expect(refreshCalls).toBe(1);
+    expect(unauthorizedCalls).toBe(1);
+  });
+
+  test("does not refresh non-401 responses", async () => {
+    let refreshCalls = 0;
+    const client = createApiClient({
+      baseUrl: "/api",
+      refreshAccessToken: () => {
+        refreshCalls += 1;
+      },
+      fetcher: async () => new Response(null, { status: 500 })
+    });
+
+    await expect(client.get("/private")).rejects.toBeInstanceOf(ApiError);
+    expect(refreshCalls).toBe(0);
+  });
 });

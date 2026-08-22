@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import type { AuthBridge, AuthSession, AuthStatus, CurrentUser, LoginCredentials } from "@tsuz/shared";
-import { loginWithPassword, logoutSession } from "../services/auth.service";
+import { authSessionStorage } from "../services/auth-session";
+import { loginWithEmail, logoutSession, refreshSession } from "../services/auth.service";
 
 interface AuthState {
   status: AuthStatus;
@@ -13,16 +14,18 @@ interface AuthState {
   getCurrentUser: () => CurrentUser | undefined;
 }
 
+const storedSession = authSessionStorage.read();
+
 export const useAuthStore = create<AuthState>((set, get) => ({
-  status: "anonymous",
-  user: undefined,
-  accessToken: undefined,
+  status: storedSession?.user ? "authenticated" : "anonymous",
+  user: storedSession?.user,
+  accessToken: storedSession?.accessToken,
   error: undefined,
   async login(credentials) {
     set({ status: "authenticating", error: undefined });
 
     try {
-      const session = await loginWithPassword(credentials);
+      const session = await loginWithEmail(credentials);
 
       set({
         status: "authenticated",
@@ -35,6 +38,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     } catch (error) {
       const message = error instanceof Error ? error.message : "Login failed.";
 
+      authSessionStorage.clear();
       set({
         status: "anonymous",
         user: undefined,
@@ -60,3 +64,51 @@ export const authBridge: AuthBridge = {
     void useAuthStore.getState().logout();
   }
 };
+
+authSessionStorage.subscribe(() => {
+  const session = authSessionStorage.read();
+
+  if (!session) {
+    useAuthStore.setState({ status: "anonymous", user: undefined, accessToken: undefined, error: undefined });
+    return;
+  }
+
+  const nextState: Pick<AuthState, "accessToken"> & Partial<Pick<AuthState, "status" | "user" | "error">> = {
+    accessToken: session.accessToken
+  };
+
+  if (session.user) {
+    nextState.status = "authenticated";
+    nextState.user = session.user;
+    nextState.error = undefined;
+  }
+
+  useAuthStore.setState(nextState);
+});
+
+export async function restoreAuthSession() {
+  const session = authSessionStorage.read();
+
+  if (!session?.refreshToken) {
+    return false;
+  }
+
+  useAuthStore.setState({ status: "authenticating", error: undefined });
+
+  try {
+    const token = await refreshSession();
+    const refreshedSession = authSessionStorage.read();
+
+    useAuthStore.setState({
+      status: "authenticated",
+      user: refreshedSession?.user,
+      accessToken: token.access_token,
+      error: undefined
+    });
+    return true;
+  } catch {
+    authSessionStorage.clear();
+    useAuthStore.setState({ status: "anonymous", user: undefined, accessToken: undefined, error: undefined });
+    return false;
+  }
+}

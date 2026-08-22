@@ -6,11 +6,26 @@ export default defineConfig({
   plugins: [react()],
   test: {
     environment: "jsdom",
-    setupFiles: "./src/test/setup.ts"
+    setupFiles: "./src/test/setup.ts",
+    testTimeout: 15_000,
+    pool: "forks",
+    poolOptions: {
+      forks: {
+        singleFork: true
+      }
+    }
   },
   server: {
     port: 7200,
-    strictPort: true
+    strictPort: true,
+    proxy: {
+      "/api": {
+        target: "https://test-api.tusz.online",
+        changeOrigin: true,
+        secure: true,
+        rewrite: (path) => path.replace(/^\/api/, "")
+      }
+    }
   },
   resolve: {
     alias: {

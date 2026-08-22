@@ -1,11 +1,40 @@
 import { expect, test } from "@playwright/test";
 
+const testEmail = "admin@example.com";
+const testPassword = "password123";
+
 test("logs in, visits the application center and can manage the profile", async ({ page }) => {
+  await page.route("**/api/auth/email/login", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        access_token: "e2e-access-token",
+        refresh_token: "e2e-refresh-token",
+        token_type: "Bearer",
+        expires_in: 3600
+      })
+    });
+  });
+  await page.route("**/api/auth/me", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ id: "e2e-user", username: testEmail, roles: ["admin"] })
+    });
+  });
+  await page.route("**/api/auth/logout", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ message: "Logged out" })
+    });
+  });
+
   await page.goto("/login");
 
-  await expect(page.getByText("演示账号")).toBeVisible();
-  await expect(page.locator("#username")).toHaveValue("admin");
-  await expect(page.locator("#password")).toHaveValue("password123");
+  await expect(page.getByLabel("邮箱")).toHaveValue(testEmail);
+  await expect(page.locator("#password")).toHaveValue(testPassword);
 
   await page.getByRole("button", { name: /登\s*录/ }).click();
 
@@ -14,13 +43,13 @@ test("logs in, visits the application center and can manage the profile", async 
   await expect(page.getByText("数据分析")).toBeVisible();
   await expect(page.getByText("权限管理")).toBeVisible();
 
-  await page.getByRole("button", { name: "打开admin用户菜单" }).click();
+  await page.getByRole("button", { name: `打开${testEmail}用户菜单` }).click();
   await page.getByText("个人中心").click();
   await expect(page).toHaveURL(/\/profile$/);
   await expect(page.getByRole("heading", { name: "个人中心" })).toBeVisible();
-  await expect(page.getByText("Demo Admin")).toBeVisible();
+  await expect(page.getByRole("heading", { name: testEmail })).toBeVisible();
 
-  await page.getByRole("button", { name: "打开admin用户菜单" }).click();
+  await page.getByRole("button", { name: `打开${testEmail}用户菜单` }).click();
   await page.getByText("退出登录").click();
   await expect(page).toHaveURL(/\/login$/);
 });
