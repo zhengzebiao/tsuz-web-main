@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import type { AuthBridge, AuthSession, AuthStatus, CurrentUser, LoginCredentials } from "@tsuz/shared";
-import { authSessionStorage } from "../services/auth-session";
+import { authSessionStorage, isAuthSessionExpired } from "../services/auth-session";
 import { loginWithEmail, logoutSession, refreshSession } from "../services/auth.service";
 
 interface AuthState {
@@ -17,7 +17,11 @@ interface AuthState {
 const storedSession = authSessionStorage.read();
 
 export const useAuthStore = create<AuthState>((set, get) => ({
-  status: storedSession?.user ? "authenticated" : "anonymous",
+  status: storedSession?.user
+    ? isAuthSessionExpired(storedSession)
+      ? "authenticating"
+      : "authenticated"
+    : "anonymous",
   user: storedSession?.user,
   accessToken: storedSession?.accessToken,
   error: undefined,
@@ -86,26 +90,43 @@ authSessionStorage.subscribe(() => {
   useAuthStore.setState(nextState);
 });
 
-export async function restoreAuthSession() {
+export async function restoreAuthSession(refresh = refreshSession) {
   const session = authSessionStorage.read();
 
-  if (!session?.refreshToken) {
+  if (!session) {
+    useAuthStore.setState({ status: "anonymous", user: undefined, accessToken: undefined, error: undefined });
+    return false;
+  }
+
+  if (!isAuthSessionExpired(session)) {
+    useAuthStore.setState({
+      status: session.user ? "authenticated" : "anonymous",
+      user: session.user,
+      accessToken: session.accessToken,
+      error: undefined
+    });
+    return Boolean(session.user);
+  }
+
+  if (!session.refreshToken) {
+    authSessionStorage.clear();
+    useAuthStore.setState({ status: "anonymous", user: undefined, accessToken: undefined, error: undefined });
     return false;
   }
 
   useAuthStore.setState({ status: "authenticating", error: undefined });
 
   try {
-    const token = await refreshSession();
+    const token = await refresh();
     const refreshedSession = authSessionStorage.read();
 
     useAuthStore.setState({
-      status: "authenticated",
+      status: refreshedSession?.user ? "authenticated" : "anonymous",
       user: refreshedSession?.user,
       accessToken: token.access_token,
       error: undefined
     });
-    return true;
+    return Boolean(refreshedSession?.user);
   } catch {
     authSessionStorage.clear();
     useAuthStore.setState({ status: "anonymous", user: undefined, accessToken: undefined, error: undefined });

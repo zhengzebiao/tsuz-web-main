@@ -79,6 +79,11 @@ export function getExpiresAt(expiresInSeconds: number, now = Date.now()) {
   return new Date(now + expiresInSeconds * 1000).toISOString();
 }
 
+export function isAuthSessionExpired(session: Pick<StoredAuthSession, "expiresAt">, now = Date.now()) {
+  const expiresAt = Date.parse(session.expiresAt);
+  return !Number.isFinite(expiresAt) || expiresAt <= now;
+}
+
 function getSessionStorage() {
   if (typeof globalThis.sessionStorage === "undefined") {
     return undefined;

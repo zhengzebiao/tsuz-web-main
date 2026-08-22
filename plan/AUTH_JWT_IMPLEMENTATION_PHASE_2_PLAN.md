@@ -1,6 +1,6 @@
 # JWT 认证接入：第二阶段“主应用 auth API 与会话”实现计划
 
-> 状态：已实现，待执行记录归档
+> 状态：已实现，行为修正已补充
 >
 > 总实施方案：[AUTH_JWT_IMPLEMENTATION_PLAN.md](./AUTH_JWT_IMPLEMENTATION_PLAN.md)
 >
@@ -17,7 +17,7 @@
 ## 2. 实现内容
 
 - 8 个 endpoint 保持后端 snake_case 字段；所有无需登录的 auth 写接口显式跳过自动 refresh；
-- access/refresh token 和 expiresAt 写入 sessionStorage；存储异常时使用内存 session；
+- access/refresh token 和 expiresAt 写入 sessionStorage；存储异常时使用内存 session；页面启动恢复时优先复用未过期 access token，仅在过期时调用 refresh；
 - `/auth/me` 映射为现有 `CurrentUser`，后端没有提供的 permissions 使用空数组；
 - logout 尝试调用后端后，在 finally 清理本地会话；
 - refresh 更新 access token、refresh token 和过期时间。

@@ -53,3 +53,37 @@ test("logs in, visits the application center and can manage the profile", async 
   await page.getByText("退出登录").click();
   await expect(page).toHaveURL(/\/login$/);
 });
+
+test("restores an unexpired session after reload without refreshing", async ({ page }) => {
+  let refreshCalls = 0;
+
+  await page.route("**/api/auth/refresh", async (route) => {
+    refreshCalls += 1;
+    await route.fulfill({ status: 401, contentType: "application/json", body: JSON.stringify({ message: "Unexpected refresh" }) });
+  });
+
+  await page.addInitScript(() => {
+    window.sessionStorage.setItem(
+      "tsuz.auth.session",
+      JSON.stringify({
+        accessToken: "e2e-access-token",
+        refreshToken: "e2e-refresh-token",
+        expiresAt: new Date(Date.now() + 3_600_000).toISOString(),
+        user: {
+          id: "e2e-user",
+          name: "admin@example.com",
+          username: "admin@example.com",
+          roles: ["admin"],
+          permissions: []
+        }
+      })
+    );
+  });
+
+  await page.goto("/apps");
+  await expect(page.getByRole("heading", { name: "应用中心" })).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole("heading", { name: "应用中心" })).toBeVisible();
+
+  expect(refreshCalls).toBe(0);
+});

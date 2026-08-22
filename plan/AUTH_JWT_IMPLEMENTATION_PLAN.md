@@ -1,6 +1,6 @@
 # JWT 认证接入实施方案
 
-> 状态：已完成（代码与自动化验证完成；真实测试 API 联调待受控环境）
+> 状态：已完成（代码与自动化验证完成；会话恢复行为已修正；真实测试 API 联调待受控环境）
 >
 > 接口事实来源：[测试环境 OpenAPI 文档](https://test-api.tusz.online/openapi.json)。
 >
@@ -12,7 +12,7 @@
 | --- | --- | --- |
 | 登录接口 | 使用 `POST /auth/email/login`，不接入 `POST /auth/login` | 已确认；用户要求 |
 | 测试账号 | `admin@example.com` / `password123` | 已确认；用户提供，仅用于受控测试，不写入生产配置 |
-| JWT 生命周期 | access token + refresh token；401 时单飞刷新并将原请求最多重试一次 | 已确认；用户确认的并发规则 |
+| JWT 生命周期 | access token + refresh token；页面恢复优先复用未过期 access token，仅在过期或业务请求 401 时单飞刷新并将原请求最多重试一次 | 已确认；用户确认的并发规则 |
 | 共享 API 包职责 | 只提供通用请求、Bearer 注入、refresh 协调和重试，不放业务 endpoint | 已确认；架构讨论 |
 | 业务接口归属 | 8 个 auth 接口在主应用 service 中构造 | 已确认；用户要求 |
 | 页面范围 | 本次只实现邮箱登录；注册、验证码、忘记密码、密码重置页面暂不实现 | 已确认；用户要求 |
@@ -59,6 +59,11 @@
   → GET /auth/me
   → 映射用户并进入 /apps
 
+页面刷新
+  → 读取 sessionStorage 中的 session
+  → access token 未过期：直接恢复认证状态，不调用 refresh
+  → access token 已过期：POST /auth/refresh（跳过自动 refresh）
+
 业务请求 401
   → 同一客户端复用 refresh Promise
   → POST /auth/refresh（跳过自动 refresh）
@@ -67,7 +72,7 @@
   → 刷新失败或重试仍 401 时清理会话
 ```
 
-非 401 响应不触发 refresh；每个请求最多重试一次；refresh 自身不会递归刷新。
+非 401 响应不触发 refresh；页面恢复不会主动 refresh 未过期 token；每个请求最多重试一次；refresh 自身不会递归刷新。
 
 ## 5. 模块职责
 

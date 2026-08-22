@@ -11,7 +11,7 @@
 ## 1. 实际完成
 
 - [apps/main/src/services/auth-api.ts](../apps/main/src/services/auth-api.ts)：新增 8 个 auth endpoint wrapper 和 OpenAPI 请求/响应类型；无 `/auth/login` wrapper。
-- [apps/main/src/services/auth-session.ts](../apps/main/src/services/auth-session.ts)：新增 sessionStorage 读写、清理、内存回退和 expiresAt 计算。
+- [apps/main/src/services/auth-session.ts](../apps/main/src/services/auth-session.ts)：新增 sessionStorage 读写、清理、内存回退、expiresAt 计算和过期判断。页面启动恢复时优先复用未过期 access token，不主动调用 refresh。
 - [apps/main/src/services/api-client.ts](../apps/main/src/services/api-client.ts)：主应用客户端读取会话 token，并支持注入 refresh/未授权处理。
 - [apps/main/src/services/auth.service.ts](../apps/main/src/services/auth.service.ts)：新增登录、刷新、登出、当前用户映射及 token 生命周期。
 - [apps/main/src/stores/auth.store.ts](../apps/main/src/stores/auth.store.ts)：使用真实会话字段，初始化并向 auth bridge 暴露当前 token/user。
@@ -26,6 +26,8 @@
 - logout 的本地清理位于 finally；
 - permissions 在后端未返回时为空数组；
 - refresh 请求显式设置 `skipAuthRefresh`。
+- 页面启动恢复先读取 `sessionStorage` 中的 `expiresAt`：未过期 session 直接恢复 Zustand 状态，不调用 `/auth/refresh`；过期 session 才执行 refresh，失败时清理本地会话。
+- [apps/main/src/components/RequireAuth.tsx](../apps/main/src/components/RequireAuth.tsx)：会话恢复期间显示等待状态，避免 refresh 尚未完成时误跳转登录页。
 
 ## 3. 验证结果
 
