@@ -1,12 +1,12 @@
-import type { AuthSession, CurrentUser } from "@tsuz/shared";
+import type { AuthSession } from "@tsuz/shared";
 
-const SESSION_STORAGE_KEY = "tsuz.auth.session";
+const LEGACY_SESSION_STORAGE_KEY = "tsuz.auth.session";
+export const AUTH_SESSION_STORAGE_KEY = import.meta.env.VITE_MAIN_WEB_SESSION?.trim() || LEGACY_SESSION_STORAGE_KEY;
 
 export interface StoredAuthSession {
   accessToken: string;
   refreshToken: string;
   expiresAt: string;
-  user?: CurrentUser;
 }
 
 export interface AuthSessionStorage {
@@ -28,8 +28,18 @@ export const authSessionStorage: AuthSessionStorage = {
     }
 
     try {
-      const value: unknown = JSON.parse(storage.getItem(SESSION_STORAGE_KEY) ?? "null");
-      return isStoredAuthSession(value) ? value : memorySession;
+      const value: unknown = JSON.parse(storage.getItem(AUTH_SESSION_STORAGE_KEY) ?? "null");
+      const session = normalizeStoredAuthSession(value);
+
+      if (!session) {
+        return memorySession;
+      }
+
+      if (JSON.stringify(value) !== JSON.stringify(session)) {
+        storage.setItem(AUTH_SESSION_STORAGE_KEY, JSON.stringify(session));
+      }
+
+      return session;
     } catch {
       return memorySession;
     }
@@ -38,7 +48,7 @@ export const authSessionStorage: AuthSessionStorage = {
     memorySession = session;
 
     try {
-      getSessionStorage()?.setItem(SESSION_STORAGE_KEY, JSON.stringify(session));
+      getSessionStorage()?.setItem(AUTH_SESSION_STORAGE_KEY, JSON.stringify(session));
     } catch {
       // Session persistence is best effort; the in-memory auth store remains authoritative.
     }
@@ -48,7 +58,7 @@ export const authSessionStorage: AuthSessionStorage = {
     memorySession = undefined;
 
     try {
-      getSessionStorage()?.removeItem(SESSION_STORAGE_KEY);
+      getSessionStorage()?.removeItem(AUTH_SESSION_STORAGE_KEY);
     } catch {
       // Ignore storage failures while clearing local authentication state.
     }
@@ -70,8 +80,7 @@ export function toStoredAuthSession(session: AuthSession): StoredAuthSession {
   return {
     accessToken: session.accessToken,
     refreshToken: session.refreshToken,
-    expiresAt: session.expiresAt,
-    user: session.user
+    expiresAt: session.expiresAt
   };
 }
 
@@ -92,15 +101,24 @@ function getSessionStorage() {
   return globalThis.sessionStorage;
 }
 
-function isStoredAuthSession(value: unknown): value is StoredAuthSession {
+function normalizeStoredAuthSession(value: unknown): StoredAuthSession | undefined {
   if (typeof value !== "object" || value === null) {
-    return false;
+    return undefined;
   }
 
   const session = value as Partial<StoredAuthSession>;
-  return (
-    typeof session.accessToken === "string" &&
-    typeof session.refreshToken === "string" &&
-    typeof session.expiresAt === "string"
-  );
+
+  if (
+    typeof session.accessToken !== "string" ||
+    typeof session.refreshToken !== "string" ||
+    typeof session.expiresAt !== "string"
+  ) {
+    return undefined;
+  }
+
+  return {
+    accessToken: session.accessToken,
+    refreshToken: session.refreshToken,
+    expiresAt: session.expiresAt
+  };
 }

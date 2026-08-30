@@ -48,7 +48,28 @@ describe("auth service", () => {
       { skipAuthRefresh: true }
     );
     expect(client.get).toHaveBeenCalledWith("/auth/me");
-    expect(authSessionStorage.read()?.accessToken).toBe("access-token");
+    expect(authSessionStorage.read()).toEqual({
+      accessToken: "access-token",
+      refreshToken: "refresh-token",
+      expiresAt: expect.any(String)
+    });
+    expect(window.sessionStorage.getItem("tsuz-web-main-test")).not.toContain("user");
+  });
+
+  test("loads and maps the current user from /auth/me", async () => {
+    const client = createClient({
+      get: vi.fn().mockResolvedValue({ id: "user-2", username: "operator@example.com", roles: ["operator"] })
+    });
+    const service = createAuthService(client);
+
+    await expect(service.getCurrentUser()).resolves.toEqual({
+      id: "user-2",
+      name: "operator@example.com",
+      username: "operator@example.com",
+      roles: ["operator"],
+      permissions: []
+    });
+    expect(client.get).toHaveBeenCalledWith("/auth/me");
   });
 
   test("rejects empty email or password before making a request", async () => {
@@ -65,14 +86,7 @@ describe("auth service", () => {
     authSessionStorage.write({
       accessToken: "old-access",
       refreshToken: "old-refresh",
-      expiresAt: new Date(Date.now() + 60_000).toISOString(),
-      user: {
-        id: "user-1",
-        name: "admin@example.com",
-        username: "admin@example.com",
-        roles: ["admin"],
-        permissions: []
-      }
+      expiresAt: new Date(Date.now() + 60_000).toISOString()
     });
     const client = createClient({ post: vi.fn().mockResolvedValue(tokenResponse) });
     const service = createAuthService(client);

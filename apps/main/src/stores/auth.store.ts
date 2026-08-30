@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import type { AuthBridge, AuthSession, AuthStatus, CurrentUser, LoginCredentials } from "@tsuz/shared";
 import { authSessionStorage, isAuthSessionExpired } from "../services/auth-session";
-import { loginWithEmail, logoutSession, refreshSession } from "../services/auth.service";
+import { getCurrentUser, loginWithEmail, logoutSession, refreshSession } from "../services/auth.service";
 
 interface AuthState {
   status: AuthStatus;
@@ -17,12 +17,8 @@ interface AuthState {
 const storedSession = authSessionStorage.read();
 
 export const useAuthStore = create<AuthState>((set, get) => ({
-  status: storedSession?.user
-    ? isAuthSessionExpired(storedSession)
-      ? "authenticating"
-      : "authenticated"
-    : "anonymous",
-  user: storedSession?.user,
+  status: storedSession ? "authenticating" : "anonymous",
+  user: undefined,
   accessToken: storedSession?.accessToken,
   error: undefined,
   async login(credentials) {
@@ -77,20 +73,20 @@ authSessionStorage.subscribe(() => {
     return;
   }
 
-  const nextState: Pick<AuthState, "accessToken"> & Partial<Pick<AuthState, "status" | "user" | "error">> = {
-    accessToken: session.accessToken
-  };
+  const currentUser = useAuthStore.getState().user;
 
-  if (session.user) {
-    nextState.status = "authenticated";
-    nextState.user = session.user;
-    nextState.error = undefined;
-  }
-
-  useAuthStore.setState(nextState);
+  useAuthStore.setState({
+    status: currentUser ? "authenticated" : "authenticating",
+    user: currentUser,
+    accessToken: session.accessToken,
+    error: undefined
+  });
 });
 
-export async function restoreAuthSession(refresh = refreshSession) {
+export async function restoreAuthSession(
+  refresh = refreshSession,
+  fetchCurrentUser = getCurrentUser
+) {
   const session = authSessionStorage.read();
 
   if (!session) {
@@ -98,35 +94,32 @@ export async function restoreAuthSession(refresh = refreshSession) {
     return false;
   }
 
-  if (!isAuthSessionExpired(session)) {
-    useAuthStore.setState({
-      status: session.user ? "authenticated" : "anonymous",
-      user: session.user,
-      accessToken: session.accessToken,
-      error: undefined
-    });
-    return Boolean(session.user);
-  }
-
-  if (!session.refreshToken) {
-    authSessionStorage.clear();
-    useAuthStore.setState({ status: "anonymous", user: undefined, accessToken: undefined, error: undefined });
-    return false;
-  }
-
-  useAuthStore.setState({ status: "authenticating", error: undefined });
+  useAuthStore.setState({ status: "authenticating", user: undefined, accessToken: session.accessToken, error: undefined });
 
   try {
-    const token = await refresh();
-    const refreshedSession = authSessionStorage.read();
+    if (isAuthSessionExpired(session)) {
+      if (!session.refreshToken) {
+        throw new Error("Refresh token is unavailable.");
+      }
+
+      await refresh();
+    }
+
+    const currentSession = authSessionStorage.read();
+
+    if (!currentSession) {
+      throw new Error("Authentication session is unavailable.");
+    }
+
+    const user = await fetchCurrentUser();
 
     useAuthStore.setState({
-      status: refreshedSession?.user ? "authenticated" : "anonymous",
-      user: refreshedSession?.user,
-      accessToken: token.access_token,
+      status: "authenticated",
+      user,
+      accessToken: currentSession.accessToken,
       error: undefined
     });
-    return Boolean(refreshedSession?.user);
+    return true;
   } catch {
     authSessionStorage.clear();
     useAuthStore.setState({ status: "anonymous", user: undefined, accessToken: undefined, error: undefined });

@@ -59,23 +59,27 @@ test("restores an unexpired session after reload without refreshing", async ({ p
 
   await page.route("**/api/auth/refresh", async (route) => {
     refreshCalls += 1;
-    await route.fulfill({ status: 401, contentType: "application/json", body: JSON.stringify({ message: "Unexpected refresh" }) });
+    await route.fulfill({
+      status: 401,
+      contentType: "application/json",
+      body: JSON.stringify({ message: "Unexpected refresh" })
+    });
+  });
+  await page.route("**/api/auth/me", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ id: "e2e-reloaded-user", username: "reloaded@example.com", roles: ["operator"] })
+    });
   });
 
   await page.addInitScript(() => {
     window.sessionStorage.setItem(
-      "tsuz.auth.session",
+      "tsuz-web-main-test",
       JSON.stringify({
         accessToken: "e2e-access-token",
         refreshToken: "e2e-refresh-token",
-        expiresAt: new Date(Date.now() + 3_600_000).toISOString(),
-        user: {
-          id: "e2e-user",
-          name: "admin@example.com",
-          username: "admin@example.com",
-          roles: ["admin"],
-          permissions: []
-        }
+        expiresAt: new Date(Date.now() + 3_600_000).toISOString()
       })
     );
   });
@@ -84,6 +88,10 @@ test("restores an unexpired session after reload without refreshing", async ({ p
   await expect(page.getByRole("heading", { name: "应用中心" })).toBeVisible();
   await page.reload();
   await expect(page.getByRole("heading", { name: "应用中心" })).toBeVisible();
+  await page.getByRole("button", { name: /打开reloaded@example\.com用户菜单/ }).click();
+  await page.getByText("个人中心").click();
+  await expect(page.getByRole("heading", { name: "reloaded@example.com" })).toBeVisible();
+  await expect(page.evaluate(() => window.sessionStorage.getItem("tsuz-web-main-test"))).resolves.not.toContain("user");
 
   expect(refreshCalls).toBe(0);
 });

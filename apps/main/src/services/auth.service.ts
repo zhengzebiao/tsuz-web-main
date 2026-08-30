@@ -7,6 +7,7 @@ import { authSessionStorage, getExpiresAt, toStoredAuthSession } from "./auth-se
 export interface AuthService {
   loginWithEmail: (credentials: LoginCredentials) => Promise<AuthSession>;
   refreshSession: () => Promise<TokenResponse>;
+  getCurrentUser: () => Promise<CurrentUser>;
   logoutSession: () => Promise<void>;
 }
 
@@ -16,6 +17,7 @@ export function createAuthService(client?: ApiClient): AuthService {
   return {
     loginWithEmail: (credentials) => loginWithEmailUsingApi(api, credentials),
     refreshSession: () => refreshSessionUsingApi(api),
+    getCurrentUser: () => getCurrentUserUsingApi(api),
     logoutSession: () => logoutSessionUsingApi(api)
   };
 }
@@ -28,6 +30,10 @@ export async function loginWithEmail(credentials: LoginCredentials): Promise<Aut
 
 export async function refreshSession(): Promise<TokenResponse> {
   return authService.refreshSession();
+}
+
+export async function getCurrentUser(): Promise<CurrentUser> {
+  return authService.getCurrentUser();
 }
 
 export async function logoutSession(): Promise<void> {
@@ -58,6 +64,10 @@ async function loginWithEmailUsingApi(api: AuthApi, credentials: LoginCredential
     authSessionStorage.clear();
     throw error;
   }
+}
+
+async function getCurrentUserUsingApi(api: AuthApi): Promise<CurrentUser> {
+  return mapCurrentUser(await api.getCurrentUser());
 }
 
 async function refreshSessionUsingApi(api: AuthApi): Promise<TokenResponse> {

@@ -17,7 +17,7 @@
 | 业务接口归属 | 8 个 auth 接口在主应用 service 中构造 | 已确认；用户要求 |
 | 页面范围 | 本次只实现邮箱登录；注册、验证码、忘记密码、密码重置页面暂不实现 | 已确认；用户要求 |
 | API 地址 | 通过 `VITE_API_BASE_URL` 配置；本地未配置时默认 `http://localhost:8080/api`，非本地环境默认 `/api` | 当前实现；需部署环境确认 |
-| token 存储 | 优先 `sessionStorage`，内存状态作为存储失败时的回退 | 当前实现；安全默认 |
+| token 存储 | 使用 `VITE_MAIN_WEB_SESSION` 作为 `sessionStorage` key；仅持久化 access/refresh token 和 expiresAt，用户资料不持久化 | 当前实现；安全默认 |
 
 ## 2. 背景与现状
 
@@ -55,14 +55,14 @@
 ```text
 邮箱登录
   → POST /auth/email/login
-  → 保存 access_token / refresh_token
+  → 保存 access_token / refresh_token / expiresAt（不保存 user）
   → GET /auth/me
-  → 映射用户并进入 /apps
+  → 仅在内存中映射用户并进入 /apps
 
 页面刷新
-  → 读取 sessionStorage 中的 session
-  → access token 未过期：直接恢复认证状态，不调用 refresh
-  → access token 已过期：POST /auth/refresh（跳过自动 refresh）
+  → 读取 `VITE_MAIN_WEB_SESSION` 对应的 sessionStorage session
+  → access token 未过期：不调用 refresh，调用 GET /auth/me 恢复内存用户
+  → access token 已过期：POST /auth/refresh（跳过自动 refresh），再调用 GET /auth/me
 
 业务请求 401
   → 同一客户端复用 refresh Promise
@@ -86,11 +86,11 @@
 
 ### `apps/main/src/services/auth-session.ts`
 
-负责 sessionStorage 的读写、清除、expiresAt 转换和内存回退；不负责路由跳转。
+负责使用 `VITE_MAIN_WEB_SESSION` 作为 key 读写 sessionStorage、清除会话、expiresAt 转换和内存回退；只保存 token 生命周期字段，不保存 user；不负责路由跳转。
 
 ### `apps/main/src/services/auth.service.ts`
 
-负责登录、刷新、登出、当前用户映射和 session 生命周期；logout 最终一定清除本地认证状态。
+负责登录、刷新、登出、`/auth/me` 当前用户映射和 session 生命周期；用户资料只保留在内存 store，logout 最终一定清除本地认证状态。
 
 ### `apps/main/src/stores/auth.store.ts`
 

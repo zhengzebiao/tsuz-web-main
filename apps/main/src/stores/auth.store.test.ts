@@ -13,8 +13,7 @@ const user = {
 const validSession = {
   accessToken: "access-token",
   refreshToken: "refresh-token",
-  expiresAt: getExpiresAt(3600),
-  user
+  expiresAt: getExpiresAt(3600)
 };
 
 beforeEach(() => {
@@ -31,10 +30,12 @@ describe("restoreAuthSession", () => {
   test("restores a valid session without calling refresh", async () => {
     authSessionStorage.write(validSession);
     const refresh = vi.fn();
+    const fetchCurrentUser = vi.fn().mockResolvedValue(user);
 
-    await expect(restoreAuthSession(refresh)).resolves.toBe(true);
+    await expect(restoreAuthSession(refresh, fetchCurrentUser)).resolves.toBe(true);
 
     expect(refresh).not.toHaveBeenCalled();
+    expect(fetchCurrentUser).toHaveBeenCalledTimes(1);
     expect(useAuthStore.getState()).toMatchObject({
       status: "authenticated",
       user,
@@ -61,9 +62,12 @@ describe("restoreAuthSession", () => {
       };
     });
 
-    await expect(restoreAuthSession(refresh)).resolves.toBe(true);
+    const fetchCurrentUser = vi.fn().mockResolvedValue(user);
+
+    await expect(restoreAuthSession(refresh, fetchCurrentUser)).resolves.toBe(true);
 
     expect(refresh).toHaveBeenCalledTimes(1);
+    expect(fetchCurrentUser).toHaveBeenCalledTimes(1);
     expect(useAuthStore.getState()).toMatchObject({
       status: "authenticated",
       user,
@@ -74,10 +78,12 @@ describe("restoreAuthSession", () => {
   test("clears an expired session when refresh fails", async () => {
     authSessionStorage.write({ ...validSession, expiresAt: new Date(Date.now() - 1_000).toISOString() });
     const refresh = vi.fn().mockRejectedValue(new Error("refresh failed"));
+    const fetchCurrentUser = vi.fn();
 
-    await expect(restoreAuthSession(refresh)).resolves.toBe(false);
+    await expect(restoreAuthSession(refresh, fetchCurrentUser)).resolves.toBe(false);
 
     expect(refresh).toHaveBeenCalledTimes(1);
+    expect(fetchCurrentUser).not.toHaveBeenCalled();
     expect(authSessionStorage.read()).toBeUndefined();
     expect(useAuthStore.getState()).toMatchObject({
       status: "anonymous",

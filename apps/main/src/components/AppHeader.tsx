@@ -47,7 +47,7 @@ export default function AppHeader() {
         <span className="app-brand-mark" aria-hidden="true">
           A
         </span>
-        <span className="app-brand-name">Admin Console</span>
+        <span className="app-brand-name">Tusz.online</span>
       </Link>
 
       <div className="app-header-actions">

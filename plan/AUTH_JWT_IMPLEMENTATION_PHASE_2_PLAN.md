@@ -17,8 +17,8 @@
 ## 2. 实现内容
 
 - 8 个 endpoint 保持后端 snake_case 字段；所有无需登录的 auth 写接口显式跳过自动 refresh；
-- access/refresh token 和 expiresAt 写入 sessionStorage；存储异常时使用内存 session；页面启动恢复时优先复用未过期 access token，仅在过期时调用 refresh；
-- `/auth/me` 映射为现有 `CurrentUser`，后端没有提供的 permissions 使用空数组；
+- 使用 `VITE_MAIN_WEB_SESSION` 作为 sessionStorage key，仅写入 access/refresh token 和 expiresAt；存储异常时使用内存 session，不持久化 user；页面启动恢复时优先复用未过期 access token，仅在过期时调用 refresh；
+- `/auth/me` 映射为现有 `CurrentUser`，后端没有提供的 permissions 使用空数组；启动恢复和 ProfilePage 均从 `/auth/me` 获取内存中的最新 user；
 - logout 尝试调用后端后，在 finally 清理本地会话；
 - refresh 更新 access token、refresh token 和过期时间。
 

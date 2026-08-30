@@ -1,13 +1,10 @@
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
-import { authSessionStorage, getExpiresAt, isAuthSessionExpired } from "./auth-session";
-
-const user = {
-  id: "user-1",
-  name: "admin@example.com",
-  username: "admin@example.com",
-  roles: ["admin"],
-  permissions: []
-};
+import {
+  AUTH_SESSION_STORAGE_KEY,
+  authSessionStorage,
+  getExpiresAt,
+  isAuthSessionExpired
+} from "./auth-session";
 
 beforeEach(() => {
   authSessionStorage.clear();
@@ -30,20 +27,40 @@ describe("auth session storage", () => {
     expect(isAuthSessionExpired({ expiresAt: "not-a-date" }, Date.now())).toBe(true);
   });
 
-  test("persists and clears a session without changing its user data", () => {
+  test("persists only token data and clears the session", () => {
     const session = {
       accessToken: "access-token",
       refreshToken: "refresh-token",
-      expiresAt: getExpiresAt(3600),
-      user
+      expiresAt: getExpiresAt(3600)
     };
 
     authSessionStorage.write(session);
 
     expect(authSessionStorage.read()).toEqual(session);
+    expect(window.sessionStorage.getItem(AUTH_SESSION_STORAGE_KEY)).toBe(JSON.stringify(session));
+    expect(window.sessionStorage.getItem(AUTH_SESSION_STORAGE_KEY)).not.toContain("user");
 
     authSessionStorage.clear();
 
     expect(authSessionStorage.read()).toBeUndefined();
+  });
+
+  test("normalizes legacy sessions by removing the persisted user", () => {
+    window.sessionStorage.setItem(
+      AUTH_SESSION_STORAGE_KEY,
+      JSON.stringify({
+        accessToken: "access-token",
+        refreshToken: "refresh-token",
+        expiresAt: getExpiresAt(3600),
+        user: { id: "legacy-user" }
+      })
+    );
+
+    expect(authSessionStorage.read()).toEqual({
+      accessToken: "access-token",
+      refreshToken: "refresh-token",
+      expiresAt: expect.any(String)
+    });
+    expect(window.sessionStorage.getItem(AUTH_SESSION_STORAGE_KEY)).not.toContain("user");
   });
 });
