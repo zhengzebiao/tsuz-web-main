@@ -92,58 +92,58 @@ There are three environment layers:
 2. Copy `.env.deploy.example` to `.env` only when running docker compose manually in a deployment directory.
 3. Configure GitHub Environment variables and secrets for automated `.github/workflows/deploy.yml` releases.
 
-| Variable | Default | Purpose |
-| --- | --- | --- |
-| `VITE_API_BASE_URL` | `/api` | API base URL passed to sub applications |
+| Variable             | Default            | Purpose                                                |
+| -------------------- | ------------------ | ------------------------------------------------------ |
+| `VITE_API_BASE_URL`  | `/api`             | API base URL passed to sub applications                |
 | `VITE_MFE_APP_ENTRY` | `//localhost:7201` | qiankun entry URL for the generated `mfe-app` template |
-| `VITE_APP_ENV` | `local` | Build-time application environment label |
+| `VITE_APP_ENV`       | `local`            | Build-time application environment label               |
 
 `VITE_API_BASE_URL is a build-time variable`. The same build-time rule applies to `VITE_MFE_APP_ENTRY` and `VITE_APP_ENV`: changing any of them for a deployed image requires building and publishing a new immutable image tag. A rollback deploys the old image exactly as it was built.
 
 ## Scripts
 
-| Script | Description |
-| --- | --- |
-| `pnpm dev` | Start the React host shell |
-| `pnpm lint` | Run ESLint and TypeScript checks |
-| `pnpm test` | Run generated Vitest and Testing Library tests |
-| `pnpm test:e2e` | Run Playwright host E2E checks |
-| `pnpm build` | Build the workspace through Turbo |
-| `pnpm docker:build` | Build the nginx production image |
-| `pnpm docker:run` | Run the production image on http://localhost:7200 |
-| `pnpm compose:up` | Build and start the compose service |
-| `pnpm compose:down` | Stop the compose service |
-| `pnpm format` | Format generated source files |
-| `pnpm format:check` | Check formatting without writing files |
+| Script              | Description                                       |
+| ------------------- | ------------------------------------------------- |
+| `pnpm dev`          | Start the React host shell                        |
+| `pnpm lint`         | Run ESLint and TypeScript checks                  |
+| `pnpm test`         | Run generated Vitest and Testing Library tests    |
+| `pnpm test:e2e`     | Run Playwright host E2E checks                    |
+| `pnpm build`        | Build the workspace through Turbo                 |
+| `pnpm docker:build` | Build the nginx production image                  |
+| `pnpm docker:run`   | Run the production image on http://localhost:7200 |
+| `pnpm compose:up`   | Build and start the compose service               |
+| `pnpm compose:down` | Stop the compose service                          |
+| `pnpm format`       | Format generated source files                     |
+| `pnpm format:check` | Check formatting without writing files            |
 
 ## Project Structure
 
-| Path | Purpose |
-| --- | --- |
-| `apps/main/src/main.tsx` | React host bootstrap and qiankun registration startup |
-| `apps/main/src/App.tsx` | Authenticated host shell and micro-app outlet route |
-| `apps/main/src/pages/LoginPage.tsx` | Demo login page |
-| `apps/main/src/pages/LoginPage.test.tsx` | Testing Library coverage for the login surface |
-| `apps/main/src/stores/auth.store.ts` | Zustand auth state and host-to-sub-app auth bridge |
-| `apps/main/src/services/auth.service.ts` | Host JWT auth service for email login, refresh, logout, and current-user mapping |
-| `apps/main/src/services/auth-api.ts` | Host-owned auth endpoint constructors for the supported `/auth/*` API |
-| `apps/main/src/services/auth-session.ts` | Session-scoped access/refresh token storage and expiry handling |
-| `apps/main/src/services/api-client.ts` | Host API client factory with token and refresh integration |
-| `apps/main/src/providers/AppProviders.tsx` | React Query and Router providers |
-| `apps/main/src/micro-apps/config.ts` | Pure qiankun app config helpers and env-driven entry resolution |
-| `apps/main/src/micro-apps/registry.ts` | qiankun side-effect registration and start guard |
-| `e2e/host-login.spec.ts` | Playwright host login and fallback outlet smoke test |
-| `e2e/host-load-subapp.spec.ts` | Playwright integration spec for loading the generated `mfe-app` through qiankun |
-| `Dockerfile` | Multi-stage production image build using nginx runtime |
-| `nginx/nginx.conf` | SPA fallback, cache, and no-cache HTML rules |
-| `docker-compose.yml` | Single-service compose orchestration for this host app |
-| `.env.deploy.example` | Deployment variables consumed by docker compose |
-| `.github/workflows/ci.yml` | PR and main/master push quality gate for lint, format, test, build, and E2E |
-| `.github/workflows/deploy.yml` | Tag release and rollback workflow for Docker image deployment |
-| `packages/shared/src/index.ts` | Shared auth, micro-app, route, and utility contracts |
-| `packages/ui/src/index.tsx` | Shared React UI primitives: Logo, PageContainer, EmptyState, ErrorState |
-| `packages/api/src/index.ts` | Generic fetch-based API client |
-| `turbo.json` | Workspace build, lint, and test pipeline |
+| Path                                       | Purpose                                                                          |
+| ------------------------------------------ | -------------------------------------------------------------------------------- |
+| `apps/main/src/main.tsx`                   | React host bootstrap and qiankun registration startup                            |
+| `apps/main/src/App.tsx`                    | Authenticated host shell and micro-app outlet route                              |
+| `apps/main/src/pages/LoginPage.tsx`        | Demo login page                                                                  |
+| `apps/main/src/pages/LoginPage.test.tsx`   | Testing Library coverage for the login surface                                   |
+| `apps/main/src/stores/auth.store.ts`       | Zustand auth state and host-to-sub-app auth bridge                               |
+| `apps/main/src/services/auth.service.ts`   | Host JWT auth service for email login, refresh, logout, and current-user mapping |
+| `apps/main/src/services/auth-api.ts`       | Host-owned auth endpoint constructors for the supported `/auth/*` API            |
+| `apps/main/src/services/auth-session.ts`   | Session-scoped access/refresh token storage and expiry handling                  |
+| `apps/main/src/services/api-client.ts`     | Host API client factory with token and refresh integration                       |
+| `apps/main/src/providers/AppProviders.tsx` | React Query and Router providers                                                 |
+| `apps/main/src/micro-apps/config.ts`       | Pure qiankun app config helpers and env-driven entry resolution                  |
+| `apps/main/src/micro-apps/registry.ts`     | qiankun side-effect registration and start guard                                 |
+| `e2e/host-login.spec.ts`                   | Playwright host login and fallback outlet smoke test                             |
+| `e2e/host-load-subapp.spec.ts`             | Playwright integration spec for loading the generated `mfe-app` through qiankun  |
+| `Dockerfile`                               | Multi-stage production image build using nginx runtime                           |
+| `nginx/nginx.conf`                         | SPA fallback, cache, and no-cache HTML rules                                     |
+| `docker-compose.yml`                       | Single-service compose orchestration for this host app                           |
+| `.env.deploy.example`                      | Deployment variables consumed by docker compose                                  |
+| `.github/workflows/ci.yml`                 | PR and main/master push quality gate for lint, format, test, build, and E2E      |
+| `.github/workflows/deploy.yml`             | Tag release and rollback workflow for Docker image deployment                    |
+| `packages/shared/src/index.ts`             | Shared auth, micro-app, route, and utility contracts                             |
+| `packages/ui/src/index.tsx`                | Shared React UI primitives: Logo, PageContainer, EmptyState, ErrorState          |
+| `packages/api/src/index.ts`                | Generic fetch-based API client                                                   |
+| `turbo.json`                               | Workspace build, lint, and test pipeline                                         |
 
 ## Shared Workspace Packages
 
@@ -178,28 +178,30 @@ Create GitHub Environments named `test` and `product`. Configure Environment pro
 
 Variables:
 
-| Variable | Purpose |
-| --- | --- |
-| `DOCKER_REGISTRY` | Registry host, for example `ghcr.io` |
-| `DOCKER_IMAGE_NAME` | Image repository/name pushed by the workflow |
-| `DOCKER_REGISTRY_USERNAME` | Registry username used for docker login |
-| `DEPLOY_HOST` | SSH host for the target server |
-| `DEPLOY_PORT` | SSH port, usually `22` |
-| `DEPLOY_USER` | SSH user for deployment |
-| `DEPLOY_PATH` | Remote directory that will receive compose assets |
-| `CONTAINER_NAME` | Runtime container name |
-| `APP_PORT` | Server port mapped to nginx port 80 |
-| `APP_ENV` | Environment label passed as `VITE_APP_ENV` at build time |
-| `VITE_API_BASE_URL` | Build-time API base URL |
-| `VITE_MFE_APP_ENTRY` | Build-time sub-app entry URL |
+| Variable                   | Purpose                                                              |
+| -------------------------- | -------------------------------------------------------------------- |
+| `DOCKER_REGISTRY`          | CCR registry host, normally `ccr.ccs.tencentyun.com`                 |
+| `DOCKER_IMAGE_NAME`        | Full image repository/name, including the CCR registry and namespace |
+| `DOCKER_REGISTRY_USERNAME` | CCR username used for docker login                                   |
+| `DOCKER_BUILD_PLATFORM`    | Optional Docker target platform, default `linux/amd64`               |
+| `DEPLOY_HOST`              | SSH host for the target server                                       |
+| `DEPLOY_PORT`              | SSH port, usually `22`                                               |
+| `DEPLOY_USER`              | SSH user for deployment                                              |
+| `DEPLOY_PATH`              | Remote directory that will receive compose assets                    |
+| `DEPLOY_REPO_PATH`         | Separate absolute path for the server-side Git checkout              |
+| `CONTAINER_NAME`           | Runtime container name                                               |
+| `APP_PORT`                 | Server port mapped to nginx port 80                                  |
+| `APP_ENV`                  | Environment label passed as `VITE_APP_ENV` at build time             |
+| `VITE_API_BASE_URL`        | Build-time API base URL                                              |
+| `VITE_MFE_APP_ENTRY`       | Build-time sub-app entry URL                                         |
 
 Secrets:
 
-| Secret | Purpose |
-| --- | --- |
+| Secret                  | Purpose                                  |
+| ----------------------- | ---------------------------------------- |
 | `DOCKER_REGISTRY_TOKEN` | Registry password/token for docker login |
-| `SSH_PRIVATE_KEY` | Private key used for server deployment |
-| `SSH_KNOWN_HOSTS` | Optional pinned known_hosts content |
+| `SSH_PRIVATE_KEY`       | Private key used for server deployment   |
+| `SSH_KNOWN_HOSTS`       | Optional pinned known_hosts content      |
 
 ### Tag release flow
 
@@ -217,20 +219,21 @@ The workflow refuses `latest`. Use immutable tags such as `test-v1.0.1` and `pro
 
 ### Deploy mechanics
 
-The deployment job builds the Docker image with `VITE_API_BASE_URL`, `VITE_MFE_APP_ENTRY`, and `VITE_APP_ENV` build args, pushes `DOCKER_IMAGE_NAME:image_tag`, then deploy.yml automatically uploads docker-compose.yml plus a generated remote `.env` file. The server does not need a hand-maintained compose file.
-
-After upload, the workflow connects over SSH and runs `docker compose pull` followed by `docker compose up -d --no-build`:
+For a tag release, the workflow connects to the deployment server over SSH, checks out the exact tagged commit in `DEPLOY_REPO_PATH`, and builds the Docker image there. The server passes `VITE_API_BASE_URL`, `VITE_MFE_APP_ENTRY`, and `VITE_APP_ENV` as build args, logs in to CCR, and pushes `DOCKER_IMAGE_NAME:image_tag`. It then uploads `docker-compose.yml` and a generated `.env` file to `DEPLOY_PATH`, and starts the locally built image without rebuilding:
 
 ```bash
-docker compose --env-file .env -f docker-compose.yml pull app
 docker compose --env-file .env -f docker-compose.yml up -d --no-build app
 ```
+
+The deployment server must have Git, Docker, the Docker Compose plugin, network access to GitHub and `ccr.ccs.tencentyun.com`, and read-only access to this GitHub repository (for example, a repository deploy key). `DEPLOY_REPO_PATH` is kept separate from `DEPLOY_PATH`; the latter contains only the runtime Compose assets.
+
+The workflow validates that the server-side tag resolves to the same commit as the GitHub Actions run, and uses immutable version tags so a build cannot silently use stale source code. The CCR token is used only for registry login and is not written to the application `.env` file.
 
 ### Rollback flow
 
 To rollback, open Actions → Deploy → Run workflow, choose `test` or `product`, and enter a historical immutable `image_tag` such as `test-v1.0.0` or `product-v1.0.0`.
 
-Rollback skips rebuild and pulls an existing registry image. The workflow validates environment prefixes, so `test` only accepts `test-v...` tags and `product` only accepts `product-v...` tags. Because `VITE_API_BASE_URL is a build-time variable`, changing API hosts or sub-app entry URLs requires a new tag build rather than a rollback.
+Rollback skips checkout and Docker build. It logs in to CCR, pulls the selected historical image, and starts it with `docker compose up -d --no-build`. The workflow validates environment prefixes and full semantic version tags, so `test` only accepts `test-vX.Y.Z` tags and `product` only accepts `product-vX.Y.Z` tags. Because `VITE_API_BASE_URL`, `VITE_MFE_APP_ENTRY`, and `VITE_APP_ENV` are build-time variables, changing them requires a new tag build rather than a rollback.
 
 ## Docker and nginx
 
@@ -246,15 +249,15 @@ Rollback skips rebuild and pulls an existing registry image. The workflow valida
 
 Copy `.env.deploy.example` to `.env` before running compose in a deployment directory.
 
-| Variable | Purpose |
-| --- | --- |
-| `DOCKER_IMAGE_NAME` | Image repository/name used by `docker-compose.yml` |
-| `APP_VERSION` | Image tag/version |
-| `CONTAINER_NAME` | Container name |
-| `APP_PORT` | Host port mapped to nginx port 80 |
-| `APP_ENV` | Deployment environment; passed to the build as `VITE_APP_ENV` |
-| `VITE_API_BASE_URL` | Build-time API base URL |
-| `VITE_MFE_APP_ENTRY` | Build-time sub-app entry URL |
+| Variable             | Purpose                                                       |
+| -------------------- | ------------------------------------------------------------- |
+| `DOCKER_IMAGE_NAME`  | Image repository/name used by `docker-compose.yml`            |
+| `APP_VERSION`        | Image tag/version                                             |
+| `CONTAINER_NAME`     | Container name                                                |
+| `APP_PORT`           | Host port mapped to nginx port 80                             |
+| `APP_ENV`            | Deployment environment; passed to the build as `VITE_APP_ENV` |
+| `VITE_API_BASE_URL`  | Build-time API base URL                                       |
+| `VITE_MFE_APP_ENTRY` | Build-time sub-app entry URL                                  |
 
 ```bash
 pnpm docker:build
