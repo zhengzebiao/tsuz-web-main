@@ -54,6 +54,62 @@ test("logs in, visits the application center and can manage the profile", async 
   await expect(page).toHaveURL(/\/login$/);
 });
 
+test("registers with email verification and enters the application center", async ({ page }) => {
+  const registerEmail = "new-user@example.com";
+  const registerPassword = "password123";
+  let codeBody: unknown;
+  let registerBody: unknown;
+
+  await page.route("**/api/auth/email/register/code", async (route) => {
+    codeBody = route.request().postDataJSON();
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ challenge_id: "e2e-challenge", expires_in: 300, resend_after: 60 })
+    });
+  });
+  await page.route("**/api/auth/email/register", async (route) => {
+    registerBody = route.request().postDataJSON();
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        access_token: "e2e-register-access-token",
+        refresh_token: "e2e-register-refresh-token",
+        token_type: "Bearer",
+        expires_in: 3600
+      })
+    });
+  });
+  await page.route("**/api/auth/me", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ id: "e2e-registered-user", username: registerEmail, roles: ["operator"] })
+    });
+  });
+
+  await page.goto("/login");
+  await page.getByText("注册", { exact: true }).first().click();
+  await page.getByLabel("邮箱").fill(registerEmail);
+  await page.getByRole("button", { name: "获取验证码" }).click();
+  await expect(page.getByRole("button", { name: /60 秒后重试/ })).toBeDisabled();
+  await page.getByLabel("验证码").fill("123456");
+  await page.getByLabel("设置密码").fill(registerPassword);
+  await page.getByLabel("确认密码").fill(registerPassword);
+  await page.getByRole("button", { name: /注\s*册/ }).click();
+
+  await expect(page).toHaveURL(/\/apps$/);
+  await expect(page.getByRole("heading", { name: "应用中心" })).toBeVisible();
+  expect(codeBody).toEqual({ email: registerEmail });
+  expect(registerBody).toEqual({
+    email: registerEmail,
+    challenge_id: "e2e-challenge",
+    code: "123456",
+    password: registerPassword
+  });
+});
+
 test("restores an unexpired session after reload without refreshing", async ({ page }) => {
   let refreshCalls = 0;
 

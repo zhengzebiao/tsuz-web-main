@@ -1,7 +1,14 @@
 import { create } from "zustand";
 import type { AuthBridge, AuthSession, AuthStatus, CurrentUser, LoginCredentials } from "@tsuz/shared";
 import { authSessionStorage, isAuthSessionExpired } from "../services/auth-session";
-import { getCurrentUser, loginWithEmail, logoutSession, refreshSession } from "../services/auth.service";
+import {
+  getCurrentUser,
+  loginWithEmail,
+  logoutSession,
+  refreshSession,
+  registerWithEmail
+} from "../services/auth.service";
+import type { EmailRegistrationRequest } from "../services/auth-api";
 
 interface AuthState {
   status: AuthStatus;
@@ -9,6 +16,7 @@ interface AuthState {
   accessToken?: string;
   error?: string;
   login: (credentials: LoginCredentials) => Promise<AuthSession>;
+  register: (request: EmailRegistrationRequest) => Promise<AuthSession>;
   logout: () => Promise<void>;
   getAccessToken: () => string | undefined;
   getCurrentUser: () => CurrentUser | undefined;
@@ -37,6 +45,34 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       return session;
     } catch (error) {
       const message = error instanceof Error ? error.message : "Login failed.";
+
+      authSessionStorage.clear();
+      set({
+        status: "anonymous",
+        user: undefined,
+        accessToken: undefined,
+        error: message
+      });
+
+      throw error;
+    }
+  },
+  async register(request) {
+    set({ status: "authenticating", error: undefined });
+
+    try {
+      const session = await registerWithEmail(request);
+
+      set({
+        status: "authenticated",
+        user: session.user,
+        accessToken: session.accessToken,
+        error: undefined
+      });
+
+      return session;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Registration failed.";
 
       authSessionStorage.clear();
       set({

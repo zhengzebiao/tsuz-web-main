@@ -1,6 +1,6 @@
 # JWT 认证接入实施方案
 
-> 状态：已完成（代码与自动化验证完成；会话恢复行为已修正；真实测试 API 联调待受控环境）
+> 状态：第五阶段已完成（注册 API 接入与自动登录）；真实测试 API 联调待受控环境
 >
 > 接口事实来源：[测试环境 OpenAPI 文档](https://test-api.tusz.online/openapi.json)。
 >
@@ -15,7 +15,7 @@
 | JWT 生命周期 | access token + refresh token；页面恢复优先复用未过期 access token，仅在过期或业务请求 401 时单飞刷新并将原请求最多重试一次 | 已确认；用户确认的并发规则 |
 | 共享 API 包职责 | 只提供通用请求、Bearer 注入、refresh 协调和重试，不放业务 endpoint | 已确认；架构讨论 |
 | 业务接口归属 | 8 个 auth 接口在主应用 service 中构造 | 已确认；用户要求 |
-| 页面范围 | 本次只实现邮箱登录；注册、验证码、忘记密码、密码重置页面暂不实现 | 已确认；用户要求 |
+| 页面范围 | 已实现邮箱登录及邮箱注册页面布局占位；注册验证码/注册接口接入、忘记密码和密码重置页面待后续阶段 | 已确认；本阶段用户要求先确认交互 |
 | API 地址 | 通过 `VITE_API_BASE_URL` 配置；本地未配置时默认 `http://localhost:8080/api`，非本地环境默认 `/api` | 当前实现；需部署环境确认 |
 | token 存储 | 使用 `VITE_MAIN_WEB_SESSION` 作为 `sessionStorage` key；仅持久化 access/refresh token 和 expiresAt，用户资料不持久化 | 当前实现；安全默认 |
 
@@ -40,15 +40,15 @@
 1. 共享请求客户端支持可注入的 refresh callback、single-flight 和单次原请求重试；
 2. 主应用构造 OpenAPI auth 分类中除 `/auth/login` 外的 8 个接口；
 3. 登录页使用邮箱登录并加载 `/auth/me`，保持现有应用中心、profile、logout 和 qiankun 路由；
-4. 使用 mock 和单元测试覆盖 refresh 并发、token 轮换和邮箱登录契约。
+4. 使用 mock 和单元测试覆盖 refresh 并发、token 轮换、邮箱登录契约、注册验证码和注册自动登录流程。
 
 ### 3.2 非目标
 
 - 不实现 `/auth/login`；
-- 不实现注册、注册验证码、忘记密码验证码和密码重置页面；
+- 不实现忘记密码验证码和密码重置页面；注册验证码和邮箱注册接口已在第五阶段接入；
 - 不把具体 auth endpoint 放进共享 API 包；
 - 不把 React Query 引入共享 API 包或新增 auth hooks；
-- 不执行真实注册、邮件发送或密码重置副作用。
+- 不执行未经授权的真实注册、邮件发送或密码重置副作用；普通自动化使用 mock。
 
 ## 4. 核心流程
 
@@ -127,7 +127,7 @@
 - [packages/api/src/index.test.ts](../packages/api/src/index.test.ts)：覆盖成功刷新、并发单飞、刷新失败、重试上限和非 401；
 - [apps/main/src/services/auth-api.test.ts](../apps/main/src/services/auth-api.test.ts)：覆盖 8 个路径且确认不存在 `/auth/login`；
 - [apps/main/src/services/auth.service.test.ts](../apps/main/src/services/auth.service.test.ts)：覆盖邮箱登录、session 保存、刷新轮换和 logout 清理；
-- [apps/main/src/pages/LoginPage.test.tsx](../apps/main/src/pages/LoginPage.test.tsx)：覆盖邮箱表单；
+- [apps/main/src/pages/LoginPage.test.tsx](../apps/main/src/pages/LoginPage.test.tsx)：覆盖邮箱登录表单、登录/注册切换、注册字段校验和占位提示；
 - [e2e/host-login.spec.ts](../e2e/host-login.spec.ts)：通过 Playwright route mock 验证邮箱登录、`/auth/me`、应用中心、profile 和 logout；
 - 真实测试 API 登录尚未作为 CI 验收，避免把账号和外部服务副作用绑定到自动化测试。
 
@@ -172,6 +172,26 @@ pnpm exec playwright test e2e/host-login.spec.ts
 
 将页面和 store 切换到 `/auth/email/login`，使用用户提供的测试账号进行 mock E2E 验证；其他 auth 页面保留为后续范围。
 
+### 第四阶段：邮箱注册页面布局与交互占位
+
+> 状态：已完成
+>
+> 阶段计划：[AUTH_JWT_IMPLEMENTATION_PHASE_4_PLAN.md](./AUTH_JWT_IMPLEMENTATION_PHASE_4_PLAN.md)
+>
+> 执行记录：[AUTH_JWT_IMPLEMENTATION_PHASE_4_EXECUTION.md](./AUTH_JWT_IMPLEMENTATION_PHASE_4_EXECUTION.md)
+
+在登录页增加登录/注册模式切换、邮箱注册字段、前端校验和无副作用占位提示；不调用注册接口。
+
+### 第五阶段：邮箱注册 API 接入
+
+> 状态：已完成
+>
+> 阶段计划：[AUTH_JWT_IMPLEMENTATION_PHASE_5_PLAN.md](./AUTH_JWT_IMPLEMENTATION_PHASE_5_PLAN.md)
+>
+> 执行记录：[AUTH_JWT_IMPLEMENTATION_PHASE_5_EXECUTION.md](./AUTH_JWT_IMPLEMENTATION_PHASE_5_EXECUTION.md)
+
+接入 `/auth/email/register/code` 和 `/auth/email/register`：验证码成功后使用 `resend_after` 倒计时，注册成功后保存 JWT、调用 `/auth/me` 并自动进入原目标路径；真实 API 联调仍需受控环境。
+
 ## 10. 当前验证结论与遗留
 
-已通过：工作区 `pnpm test`、`pnpm lint`、`pnpm build`，以及 mocked host email login Playwright 测试。构建仍有既有的大 chunk warning。真实测试 API 登录、真实 refresh 失效和生产部署验证需要配置环境和受控凭证后单独执行，不在本次自动化验收中宣称通过。
+已通过：工作区 `pnpm test`、`pnpm lint`、`pnpm build`，mocked host email login/register Playwright 测试，以及注册验证码、注册自动登录和 refresh 相关单元测试。构建仍有既有的大 chunk warning。真实测试 API 登录、验证码发送、注册、真实 refresh 失效和生产部署验证需要配置环境和受控凭证后单独执行，不在本次自动化验收中宣称通过。

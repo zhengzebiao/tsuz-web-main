@@ -1,6 +1,15 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { authSessionStorage, getExpiresAt, isAuthSessionExpired } from "../services/auth-session";
 import { restoreAuthSession, useAuthStore } from "./auth.store";
+import * as authService from "../services/auth.service";
+
+vi.mock("../services/auth.service", () => ({
+  getCurrentUser: vi.fn(),
+  loginWithEmail: vi.fn(),
+  logoutSession: vi.fn(),
+  refreshSession: vi.fn(),
+  registerWithEmail: vi.fn()
+}));
 
 const user = {
   id: "user-1",
@@ -24,6 +33,56 @@ beforeEach(() => {
 afterEach(() => {
   authSessionStorage.clear();
   vi.restoreAllMocks();
+});
+
+describe("auth store registration", () => {
+  test("registers and enters the authenticated state", async () => {
+    authSessionStorage.write(validSession);
+    vi.mocked(authService.registerWithEmail).mockResolvedValue({
+      ...validSession,
+      user
+    });
+
+    await expect(useAuthStore.getState().register({
+      email: "admin@example.com",
+      challenge_id: "challenge-1",
+      code: "123456",
+      password: "password123"
+    })).resolves.toMatchObject({ user });
+
+    expect(useAuthStore.getState()).toMatchObject({
+      status: "authenticated",
+      user,
+      accessToken: "access-token",
+      error: undefined
+    });
+    expect(authService.registerWithEmail).toHaveBeenCalledWith({
+      email: "admin@example.com",
+      challenge_id: "challenge-1",
+      code: "123456",
+      password: "password123"
+    });
+  });
+
+  test("clears the session when registration fails", async () => {
+    authSessionStorage.write(validSession);
+    vi.mocked(authService.registerWithEmail).mockRejectedValueOnce(new Error("registration failed"));
+
+    await expect(useAuthStore.getState().register({
+      email: "admin@example.com",
+      challenge_id: "challenge-1",
+      code: "123456",
+      password: "password123"
+    })).rejects.toThrow("registration failed");
+
+    expect(authSessionStorage.read()).toBeUndefined();
+    expect(useAuthStore.getState()).toMatchObject({
+      status: "anonymous",
+      user: undefined,
+      accessToken: undefined,
+      error: "registration failed"
+    });
+  });
 });
 
 describe("restoreAuthSession", () => {

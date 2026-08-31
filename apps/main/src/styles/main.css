@@ -142,6 +142,92 @@ a {
   margin: 0 0 4px;
 }
 
+.login-auth-form .ant-form-item {
+  margin-bottom: 20px;
+}
+
+.login-auth-form .ant-form-item-label {
+  flex: 0 0 72px;
+  padding: 0 12px 0 0;
+  text-align: left;
+}
+
+.login-auth-form .ant-form-item-label > label {
+  height: 40px;
+  color: #374151;
+  font-size: 14px;
+}
+
+.login-auth-form .ant-form-item-control {
+  min-width: 0;
+}
+
+.login-auth-form .ant-form-item-explain-error {
+  margin-top: 4px;
+}
+
+.login-mode-switch {
+  width: 100%;
+  margin-top: 24px;
+}
+
+.login-mode-switch.ant-segmented {
+  padding: 4px;
+  background: #f3f4f6;
+}
+
+.login-mode-switch .ant-segmented-item {
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.login-mode-switch .ant-segmented-item-selected {
+  color: #111827;
+  box-shadow: 0 2px 8px rgba(17, 24, 39, 0.08);
+}
+
+.register-code-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.register-code-field {
+  flex: 1;
+  min-width: 0;
+}
+
+.register-code-button {
+  flex: 0 0 auto;
+  margin-top: 0;
+}
+
+.login-switch-prompt {
+  margin: 24px 0 0;
+  color: #6b7280;
+  font-size: 14px;
+  text-align: center;
+}
+
+.login-switch-link {
+  padding: 0;
+  border: 0;
+  color: #4f46e5;
+  font: inherit;
+  background: transparent;
+  cursor: pointer;
+}
+
+.login-switch-link:hover {
+  color: #3730a3;
+}
+
+.login-switch-link:focus-visible {
+  border-radius: 4px;
+  outline: 2px solid #818cf8;
+  outline-offset: 2px;
+}
+
 .login-mobile-mark {
   display: none;
   margin-bottom: 16px;
@@ -455,6 +541,22 @@ a {
 @media (max-width: 479px) {
   .login-form-panel {
     padding: 32px 20px;
+  }
+
+  .register-code-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0;
+  }
+
+  .register-code-field {
+    flex: 1 1 100%;
+  }
+
+  .register-code-button {
+    width: 100%;
+    margin-top: -8px;
+    margin-bottom: 24px;
   }
 
   .app-brand-name {
