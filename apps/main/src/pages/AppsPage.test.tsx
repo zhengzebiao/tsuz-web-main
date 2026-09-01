@@ -9,7 +9,7 @@ afterEach(() => {
 });
 
 describe("AppsPage", () => {
-  test("renders the application center and all configured applications", () => {
+  test("renders all configured applications without host copy", () => {
     render(
       <MemoryRouter>
         <AntApp>
@@ -18,8 +18,8 @@ describe("AppsPage", () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByRole("heading", { name: "应用中心" })).toBeInTheDocument();
-    expect(screen.getByText("选择一个子应用开始工作")).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "应用中心" })).not.toBeInTheDocument();
+    expect(screen.queryByText("选择一个子应用开始工作")).not.toBeInTheDocument();
     expect(screen.getByText("数据分析")).toBeInTheDocument();
     expect(screen.getByText("权限管理")).toBeInTheDocument();
     expect(screen.getAllByRole("button")).toHaveLength(8);

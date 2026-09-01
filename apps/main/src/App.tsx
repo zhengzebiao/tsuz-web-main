@@ -1,9 +1,6 @@
 import { useEffect } from "react";
-import { Button, Card, Layout, Result, Typography } from "antd";
+import { Button, Layout, Result } from "antd";
 import { Navigate, Outlet, Route, Routes, useNavigate } from "react-router-dom";
-import { EmptyState, ErrorState } from "@tsuz/ui";
-import { MFE_APP_ROUTE } from "@tsuz/shared";
-import AppHeader from "./components/AppHeader";
 import RequireAuth from "./components/RequireAuth";
 import AppsPage from "./pages/AppsPage";
 import LoginPage from "./pages/LoginPage";
@@ -36,7 +33,6 @@ export default function App() {
 function AuthenticatedShell() {
   return (
     <Layout className="app-shell">
-      <AppHeader />
       <Content className="app-content">
         <Outlet />
       </Content>
@@ -70,33 +66,5 @@ function MicroAppOutlet() {
     window.dispatchEvent(new PopStateEvent("popstate"));
   }, []);
 
-  return (
-    <main className="app-page">
-      <section className="app-page-main">
-        <header className="subapp-page-heading">
-          <Typography.Title level={2}>业务子应用</Typography.Title>
-          <Typography.Paragraph type="secondary">
-            qiankun 将在此处挂载已配置的远程业务应用。
-          </Typography.Paragraph>
-        </header>
-        <Card>
-          <Typography.Paragraph>
-            主应用会向子应用传递 <code>apiBaseUrl</code>、<code>getAccessToken</code>、
-            <code>getCurrentUser</code> 和 <code>logout</code> 共享能力。
-          </Typography.Paragraph>
-          <div id="subapp-container" className="subapp-container">
-            <EmptyState
-              title="Waiting for mfe-app"
-              description="Start an mfe-app project on port 7201 to mount it in this container."
-            />
-          </div>
-          <ErrorState
-            className="integration-note"
-            title="Integration fallback"
-            description={`If the remote entry fails to load, check VITE_MFE_APP_ENTRY and the sub app dev server for ${MFE_APP_ROUTE}.`}
-          />
-        </Card>
-      </section>
-    </main>
-  );
+  return <div id="subapp-container" className="subapp-container" />;
 }
