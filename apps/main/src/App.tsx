@@ -1,8 +1,7 @@
 import { useEffect } from "react";
 import { Card, Layout, Typography } from "antd";
 import { Navigate, Outlet, Route, Routes } from "react-router-dom";
-import { EmptyState, ErrorState } from "@tsuz/ui";
-import { ADMIN_APP_ROUTE } from "@tsuz/shared";
+import { EmptyState } from "@tsuz/ui";
 import AppHeader from "./components/AppHeader";
 import RequireAuth from "./components/RequireAuth";
 import AppsPage from "./pages/AppsPage";
@@ -68,11 +67,6 @@ function MicroAppOutlet() {
               description="Start the admin app on port 7201 to mount it in this container."
             />
           </div>
-          <ErrorState
-            className="integration-note"
-            title="Integration fallback"
-            description={`If the remote entry fails to load, check VITE_ADMIN_APP_ENTRY and the admin app dev server for ${ADMIN_APP_ROUTE}.`}
-          />
         </Card>
       </section>
     </main>
