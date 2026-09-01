@@ -22,8 +22,7 @@ export default function App() {
         <Route index element={<Navigate to="/apps" replace />} />
         <Route path="apps" element={<AppsPage />} />
         <Route path="profile" element={<ProfilePage />} />
-        <Route path="admin" element={<AdminPage />} />
-        <Route path="apps/mfe-app/*" element={<MicroAppOutlet />} />
+        <Route path="app/admin/*" element={<MicroAppOutlet />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
@@ -33,6 +32,7 @@ export default function App() {
 function AuthenticatedShell() {
   return (
     <Layout className="app-shell">
+      <AppHeader />
       <Content className="app-content">
         <Outlet />
       </Content>

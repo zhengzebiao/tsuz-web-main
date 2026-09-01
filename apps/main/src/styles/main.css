@@ -481,8 +481,8 @@ a {
 .subapp-container {
   width: 100%;
   min-width: 0;
-  height: 100%;
-  min-height: 100vh;
+  height: calc(100vh - 64px);
+  min-height: calc(100vh - 64px);
   overflow: auto;
   background: transparent;
 }
