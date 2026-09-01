@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { Button, Layout, Result } from "antd";
 import { Navigate, Outlet, Route, Routes, useNavigate } from "react-router-dom";
+import AppHeader from "./components/AppHeader";
 import RequireAuth from "./components/RequireAuth";
 import AppsPage from "./pages/AppsPage";
 import LoginPage from "./pages/LoginPage";
