@@ -392,6 +392,7 @@ a {
 
 .app-grid {
   width: 100%;
+  padding: 32px;
 }
 
 .app-card {
