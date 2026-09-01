@@ -1,6 +1,6 @@
 import {
+  DEFAULT_ADMIN_APP_ENTRY,
   DEFAULT_API_BASE_URL,
-  DEFAULT_MFE_APP_ENTRY,
   matchesActiveRoute,
   microAppMetas,
   type AuthBridge,
@@ -18,7 +18,7 @@ export interface MicroAppRegistration {
   props: MicroAppProps;
 }
 
-export type MicroAppEnvironment = Partial<Record<"VITE_API_BASE_URL" | "VITE_MFE_APP_ENTRY", string | undefined>>;
+export type MicroAppEnvironment = Partial<Record<"VITE_API_BASE_URL" | "VITE_ADMIN_APP_ENTRY", string | undefined>>;
 
 export interface CreateMicroAppsOptions {
   env?: MicroAppEnvironment;
@@ -33,11 +33,11 @@ export function resolveApiBaseUrl(env: MicroAppEnvironment = readViteEnvironment
 }
 
 export function resolveMicroAppEntry(
-  meta: MicroAppMeta = microAppMetas[0],
+  _meta: MicroAppMeta = microAppMetas[0],
   env: MicroAppEnvironment = readViteEnvironment(),
-  hostname = getDefaultHostname()
+  _hostname = getDefaultHostname()
 ) {
-  return env.VITE_MFE_APP_ENTRY?.trim() || (hostname ? "//" + hostname + ":" + meta.port : DEFAULT_MFE_APP_ENTRY);
+  return env.VITE_ADMIN_APP_ENTRY?.trim() || DEFAULT_ADMIN_APP_ENTRY;
 }
 
 export { matchesActiveRoute };

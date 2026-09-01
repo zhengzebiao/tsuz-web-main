@@ -9,8 +9,8 @@ test("loads the generated sub application through qiankun", async ({ page }) => 
   await page.goto("/login");
   await page.getByRole("button", { name: /登\s*录/ }).click();
 
-  await navigateSpa(page, "/apps/mfe-app");
-  await expect(page).toHaveURL(/\/apps\/mfe-app$/);
+  await navigateSpa(page, "/app/admin");
+  await expect(page).toHaveURL(/\/app\/admin$/);
   await expect(page.getByRole("heading", { name: "Business home" })).toBeVisible({ timeout: 15_000 });
   await expect(page.getByText("Mounted by host")).toBeVisible();
   await expect(page.getByText("qiankun mount")).toBeVisible();
@@ -19,11 +19,11 @@ test("loads the generated sub application through qiankun", async ({ page }) => 
 
   await page.getByRole("link", { name: "About" }).click();
 
-  await expect(page).toHaveURL(/\/apps\/mfe-app\/about$/);
+  await expect(page).toHaveURL(/\/app\/admin\/about$/);
   await expect(page.getByText("Integration notes")).toBeVisible();
-  await expect(page.getByText("Router basename: /apps/mfe-app")).toBeVisible();
+  await expect(page.getByText("Router basename: /app/admin")).toBeVisible();
 
-  await page.goto("/apps/mfe-app-legacy");
+  await page.goto("/app/admin-legacy");
 
   await expect(page.getByText("qiankun mount")).toHaveCount(0);
   await expect(page.getByText("Business home")).toHaveCount(0);

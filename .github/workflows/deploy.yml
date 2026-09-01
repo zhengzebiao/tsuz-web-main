@@ -117,7 +117,7 @@ jobs:
       DEPLOY_REPO_PATH: ${{ vars.DEPLOY_REPO_PATH }}
       APP_ENV: ${{ vars.APP_ENV }}
       VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
-      VITE_MFE_APP_ENTRY: ${{ vars.VITE_MFE_APP_ENTRY }}
+      VITE_ADMIN_APP_ENTRY: ${{ vars.VITE_ADMIN_APP_ENTRY }}
     steps:
       - name: Resolve image name
         id: image
@@ -187,7 +187,7 @@ jobs:
           platform="${DOCKER_BUILD_PLATFORM:-linux/amd64}"
           repository_url="git@github.com:$GITHUB_REPOSITORY.git"
           api_base_url="${VITE_API_BASE_URL:-/api}"
-          mfe_app_entry="${VITE_MFE_APP_ENTRY:-//localhost:7201}"
+          admin_app_entry="${VITE_ADMIN_APP_ENTRY:-//127.0.0.1:7201/}"
           app_env="${APP_ENV:-${DEPLOY_ENV:-production}}"
 
           case "$repo_path" in
@@ -238,7 +238,7 @@ jobs:
             printf 'EXPECTED_SHA=%q\n' "$GITHUB_SHA"
             printf 'BUILD_PLATFORM=%q\n' "$platform"
             printf 'VITE_API_BASE_URL=%q\n' "$api_base_url"
-            printf 'VITE_MFE_APP_ENTRY=%q\n' "$mfe_app_entry"
+            printf 'VITE_ADMIN_APP_ENTRY=%q\n' "$admin_app_entry"
             printf 'VITE_APP_ENV=%q\n' "$app_env"
             cat <<'REMOTE_BUILD'
           set -euo pipefail
@@ -294,7 +294,7 @@ jobs:
 
           docker build --pull=false --platform "$BUILD_PLATFORM" \
             --build-arg "VITE_API_BASE_URL=$VITE_API_BASE_URL" \
-            --build-arg "VITE_MFE_APP_ENTRY=$VITE_MFE_APP_ENTRY" \
+            --build-arg "VITE_ADMIN_APP_ENTRY=$VITE_ADMIN_APP_ENTRY" \
             --build-arg "VITE_APP_ENV=$VITE_APP_ENV" \
             --label "org.opencontainers.image.revision=$fetched_commit" \
             --label "org.opencontainers.image.version=$IMAGE_TAG" \
@@ -333,7 +333,7 @@ jobs:
       APP_PORT: ${{ vars.APP_PORT }}
       APP_ENV: ${{ vars.APP_ENV }}
       VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
-      VITE_MFE_APP_ENTRY: ${{ vars.VITE_MFE_APP_ENTRY }}
+      VITE_ADMIN_APP_ENTRY: ${{ vars.VITE_ADMIN_APP_ENTRY }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -413,7 +413,7 @@ jobs:
           APP_PORT=${APP_PORT:-7200}
           APP_ENV=${APP_ENV:-$DEPLOY_ENV}
           VITE_API_BASE_URL=${VITE_API_BASE_URL:-/api}
-          VITE_MFE_APP_ENTRY=${VITE_MFE_APP_ENTRY:-//localhost:7201}
+          VITE_ADMIN_APP_ENTRY=${VITE_ADMIN_APP_ENTRY:-//127.0.0.1:7201/}
           ENV
           ssh -i ~/.ssh/deploy_key -p "${DEPLOY_PORT:-22}" "$DEPLOY_USER@$DEPLOY_HOST" "mkdir -p '$DEPLOY_PATH'"
           scp -i ~/.ssh/deploy_key -P "${DEPLOY_PORT:-22}" docker-compose.yml "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/docker-compose.yml"

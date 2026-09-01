@@ -54,7 +54,7 @@ export default function AppHeader() {
         <Button
           className="admin-entry-button"
           icon={<SettingOutlined />}
-          onClick={() => navigate("/admin")}
+          onClick={() => navigate("/app/admin")}
           aria-label="管理员入口"
         >
           <span className={isMobile ? "app-admin-label app-admin-label-hidden" : "app-admin-label"}>

@@ -41,20 +41,20 @@ export interface MicroAppProps extends AuthBridge {
   container?: HTMLElement;
 }
 
-export const MFE_APP_ROUTE = "/apps/mfe-app";
-export const MFE_APP_BASENAME = MFE_APP_ROUTE;
+export const ADMIN_APP_ROUTE = "/app/admin";
+export const ADMIN_APP_BASENAME = ADMIN_APP_ROUTE;
 export const DEFAULT_API_BASE_URL = "/api";
-export const DEFAULT_MFE_APP_ENTRY = "//localhost:7201";
+export const DEFAULT_ADMIN_APP_ENTRY = "//127.0.0.1:7201/";
 
-export const mfeAppMeta = {
-  name: "mfe-app",
-  title: "Business App",
-  activeRule: MFE_APP_ROUTE,
-  basename: MFE_APP_BASENAME,
+export const adminAppMeta = {
+  name: "admin",
+  title: "Admin",
+  activeRule: ADMIN_APP_ROUTE,
+  basename: ADMIN_APP_BASENAME,
   port: 7201
 } as const satisfies MicroAppMeta;
 
-export const microAppMetas = [mfeAppMeta] as const satisfies readonly MicroAppMeta[];
+export const microAppMetas = [adminAppMeta] as const satisfies readonly MicroAppMeta[];
 
 export type ClassValue = string | number | false | null | undefined | Record<string, boolean>;
 
