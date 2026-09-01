@@ -23,6 +23,7 @@ export default function App() {
         <Route path="apps" element={<AppsPage />} />
         <Route path="profile" element={<ProfilePage />} />
         <Route path="app/admin/*" element={<MicroAppOutlet />} />
+        <Route path="apps/mfe-app/*" element={<MicroAppOutlet />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
