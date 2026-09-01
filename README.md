@@ -192,6 +192,7 @@ Variables:
 | `DEPLOY_PATH`              | Remote directory that will receive compose assets                    |
 | `DEPLOY_REPO_PATH`         | Separate absolute path for the server-side Git checkout              |
 | `CONTAINER_NAME`           | Runtime container name                                               |
+| `COMPOSE_PROJECT_NAME`     | Dedicated Compose project name for this app stack                    |
 | `APP_PORT`                 | Server port mapped to nginx port 80                                  |
 | `APP_ENV`                  | Environment label passed as `VITE_APP_ENV` at build time             |
 | `VITE_API_BASE_URL`        | Build-time API base URL                                              |
@@ -221,7 +222,7 @@ The workflow refuses `latest`. Use immutable tags such as `test-v1.0.1` and `pro
 
 ### Deploy mechanics
 
-For a tag release, the workflow connects to the deployment server over SSH, checks out the exact tagged commit in `DEPLOY_REPO_PATH`, and builds the Docker image there. The server passes `VITE_API_BASE_URL`, `VITE_ADMIN_APP_ENTRY`, and `VITE_APP_ENV` as build args, logs in to CCR, and pushes `DOCKER_IMAGE_NAME:image_tag`. It then uploads `docker-compose.yml` and a generated `.env` file to `DEPLOY_PATH`, and starts the locally built image without rebuilding:
+For a tag release, the workflow connects to the deployment server over SSH, checks out the exact tagged commit in `DEPLOY_REPO_PATH`, and builds the Docker image there. The server passes `VITE_API_BASE_URL`, `VITE_ADMIN_APP_ENTRY`, and `VITE_APP_ENV` as build args, logs in to CCR, and pushes `DOCKER_IMAGE_NAME:image_tag`. It then uploads `docker-compose.yml` and a generated `.env` file to `DEPLOY_PATH`, using the dedicated `COMPOSE_PROJECT_NAME` to isolate this stack from other applications, and starts the locally built image without rebuilding:
 
 ```bash
 docker compose --env-file .env -f docker-compose.yml up -d --no-build app
@@ -258,6 +259,7 @@ Copy `.env.deploy.example` to `.env` before running compose in a deployment dire
 | `DOCKER_IMAGE_NAME`    | Image repository/name used by `docker-compose.yml`            |
 | `APP_VERSION`          | Image tag/version                                             |
 | `CONTAINER_NAME`       | Container name                                                |
+| `COMPOSE_PROJECT_NAME` | Dedicated Compose project name                                |
 | `APP_PORT`             | Host port mapped to nginx port 80                             |
 | `APP_ENV`              | Deployment environment; passed to the build as `VITE_APP_ENV` |
 | `VITE_API_BASE_URL`    | Build-time API base URL                                       |
