@@ -1,6 +1,6 @@
 import { useEffect } from "react";
-import { Button, Layout, Result } from "antd";
-import { Navigate, Outlet, Route, Routes, useNavigate } from "react-router-dom";
+import { Layout } from "antd";
+import { Navigate, Outlet, Route, Routes } from "react-router-dom";
 import AppHeader from "./components/AppHeader";
 import RequireAuth from "./components/RequireAuth";
 import AppsPage from "./pages/AppsPage";
@@ -24,6 +24,7 @@ export default function App() {
         <Route path="apps" element={<AppsPage />} />
         <Route path="profile" element={<ProfilePage />} />
         <Route path="app/admin/*" element={<MicroAppOutlet />} />
+        <Route path="app/jcc/*" element={<MicroAppOutlet />} />
         <Route path="apps/mfe-app/*" element={<MicroAppOutlet />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
@@ -39,27 +40,6 @@ function AuthenticatedShell() {
         <Outlet />
       </Content>
     </Layout>
-  );
-}
-
-function AdminPage() {
-  const navigate = useNavigate();
-
-  return (
-    <main className="app-page">
-      <section className="app-page-main app-page-main-narrow">
-        <Result
-          status="info"
-          title="管理员控制台"
-          subTitle="此处用于系统配置、用户与权限管理等管理员功能。"
-          extra={
-            <Button type="primary" onClick={() => navigate("/apps")}>
-              返回应用中心
-            </Button>
-          }
-        />
-      </section>
-    </main>
   );
 }
 

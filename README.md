@@ -60,13 +60,15 @@ Demo credentials:
 - Username: `admin`
 - Password: `password123`
 
-For host + sub-app integration, start the `tsuz-web-admin` project first on port 7201, then start this host with the administrator entry override:
+For host + sub-app integration, start the administrator application on port 7201 and/or the JCC application on port 7202, then start this host with the corresponding entry overrides:
 
 ```bash
-VITE_ADMIN_APP_ENTRY=//127.0.0.1:7201/ pnpm dev
+VITE_ADMIN_APP_ENTRY=//127.0.0.1:7201/ \
+VITE_JCC_APP_ENTRY=//127.0.0.1:7202/ \
+pnpm dev
 ```
 
-After signing in, visit http://localhost:7200/app/admin to mount the administrator sub application in `#subapp-container`.
+After signing in, visit http://localhost:7200/app/admin for the administrator application, or click the 金铲铲 card in the application center to open http://localhost:7200/app/jcc. Both applications mount in `#subapp-container` while the host keeps authentication and the shared shell.
 
 ## Local quality gates
 
@@ -92,13 +94,14 @@ There are three environment layers:
 2. Copy `.env.deploy.example` to `.env` only when running docker compose manually in a deployment directory.
 3. Configure GitHub Environment variables and secrets for automated `.github/workflows/deploy.yml` releases.
 
-| Variable               | Default                | Purpose                                               |
-| ---------------------- | ---------------------- | ----------------------------------------------------- |
-| `VITE_API_BASE_URL`    | `/api`                 | API base URL passed to sub applications               |
-| `VITE_ADMIN_APP_ENTRY` | `//127.0.0.1:7201/`    | qiankun entry URL for the administrator sub application |
-| `VITE_APP_ENV`         | `local`                | Build-time application environment label              |
+| Variable               | Default             | Purpose                                             |
+| ---------------------- | ------------------- | --------------------------------------------------- |
+| `VITE_API_BASE_URL`    | `/api`              | API base URL passed to sub applications             |
+| `VITE_ADMIN_APP_ENTRY` | `//127.0.0.1:7201/` | qiankun entry URL for the administrator application |
+| `VITE_JCC_APP_ENTRY`   | `//127.0.0.1:7202/` | qiankun entry URL for the JCC application           |
+| `VITE_APP_ENV`         | `local`             | Build-time application environment label            |
 
-`VITE_API_BASE_URL is a build-time variable`. The same build-time rule applies to `VITE_ADMIN_APP_ENTRY` and `VITE_APP_ENV`: changing any of them for a deployed image requires building and publishing a new immutable image tag. A rollback deploys the old image exactly as it was built.
+`VITE_API_BASE_URL` is a build-time variable. The same build-time rule applies to `VITE_ADMIN_APP_ENTRY`, `VITE_JCC_APP_ENTRY`, and `VITE_APP_ENV`: changing any of them for a deployed image requires building and publishing a new immutable image tag. A rollback deploys the old image exactly as it was built.
 
 ## Scripts
 
@@ -197,6 +200,7 @@ Variables:
 | `APP_ENV`                  | Environment label passed as `VITE_APP_ENV` at build time             |
 | `VITE_API_BASE_URL`        | Build-time API base URL                                              |
 | `VITE_ADMIN_APP_ENTRY`     | Build-time administrator sub-app entry URL                           |
+| `VITE_JCC_APP_ENTRY`       | Build-time JCC sub-app entry URL                                     |
 
 Secrets:
 
@@ -222,7 +226,7 @@ The workflow refuses `latest`. Use immutable tags such as `test-v1.0.1` and `pro
 
 ### Deploy mechanics
 
-For a tag release, the workflow connects to the deployment server over SSH, checks out the exact tagged commit in `DEPLOY_REPO_PATH`, and builds the Docker image there. The server passes `VITE_API_BASE_URL`, `VITE_ADMIN_APP_ENTRY`, and `VITE_APP_ENV` as build args, logs in to CCR, and pushes `DOCKER_IMAGE_NAME:image_tag`. It then uploads `docker-compose.yml` and a generated `.env` file to `DEPLOY_PATH`, using the dedicated `COMPOSE_PROJECT_NAME` to isolate this stack from other applications, and starts the locally built image without rebuilding:
+For a tag release, the workflow connects to the deployment server over SSH, checks out the exact tagged commit in `DEPLOY_REPO_PATH`, and builds the Docker image there. The server passes `VITE_API_BASE_URL`, `VITE_ADMIN_APP_ENTRY`, `VITE_JCC_APP_ENTRY`, and `VITE_APP_ENV` as build args, logs in to CCR, and pushes `DOCKER_IMAGE_NAME:image_tag`. It then uploads `docker-compose.yml` and a generated `.env` file to `DEPLOY_PATH`, using the dedicated `COMPOSE_PROJECT_NAME` to isolate this stack from other applications, and starts the locally built image without rebuilding:
 
 ```bash
 docker compose --env-file .env -f docker-compose.yml up -d --no-build app
@@ -236,7 +240,7 @@ The workflow validates that the server-side tag resolves to the same commit as t
 
 To rollback, open Actions → Deploy → Run workflow, choose `test` or `product`, and enter a historical immutable `image_tag` such as `test-v1.0.0` or `product-v1.0.0`.
 
-Rollback skips checkout and Docker build. It logs in to CCR, pulls the selected historical image, and starts it with `docker compose up -d --no-build`. The workflow validates environment prefixes and full semantic version tags, so `test` only accepts `test-vX.Y.Z` tags and `product` only accepts `product-vX.Y.Z` tags. Because `VITE_API_BASE_URL`, `VITE_ADMIN_APP_ENTRY`, and `VITE_APP_ENV` are build-time variables, changing them requires a new tag build rather than a rollback.
+Rollback skips checkout and Docker build. It logs in to CCR, pulls the selected historical image, and starts it with `docker compose up -d --no-build`. The workflow validates environment prefixes and full semantic version tags, so `test` only accepts `test-vX.Y.Z` tags and `product` only accepts `product-vX.Y.Z` tags. Because `VITE_API_BASE_URL`, `VITE_ADMIN_APP_ENTRY`, `VITE_JCC_APP_ENTRY`, and `VITE_APP_ENV` are build-time variables, changing them requires a new tag build rather than a rollback.
 
 ## Docker and nginx
 
@@ -244,16 +248,17 @@ Rollback skips checkout and Docker build. It logs in to CCR, pulls the selected 
 
 - `VITE_API_BASE_URL`
 - `VITE_ADMIN_APP_ENTRY`
+- `VITE_JCC_APP_ENTRY`
 - `VITE_APP_ENV`
 
-`nginx/nginx.conf` serves the host as an SPA. It falls back to `index.html` for `/login`, `/app/admin`, and nested routes, applies long cache headers to static assets, and keeps `index.html` uncached for safer releases. In the test environment, the outer Nginx should route `/` (including `/app/**`) to port 7200 and route each child application's `/subapps/<name>/` resource prefix to its own port; for example, `/subapps/admin/` to port 7201. Do not proxy `/app/admin` directly to the administrator application.
+`nginx/nginx.conf` serves the host as an SPA. It falls back to `index.html` for `/login`, `/app/admin`, `/app/jcc`, and nested routes, applies long cache headers to static assets, and keeps `index.html` uncached for safer releases. In the test environment, the outer Nginx should route `/` (including `/app/**`) to port 7200 and route each child application's `/subapps/<name>/` resource prefix to its own port; for example, `/subapps/admin/` to port 7201. Do not proxy `/app/admin` or `/app/jcc` directly to a child application. The JCC production resource entry and Nginx mapping remain environment-specific until that child application is prepared and deployed.
 
 ## Docker Compose
 
 Copy `.env.deploy.example` to `.env` before running compose in a deployment directory.
 
-| Variable             | Purpose                                                       |
-| -------------------- | ------------------------------------------------------------- |
+| Variable               | Purpose                                                       |
+| ---------------------- | ------------------------------------------------------------- |
 | Variable               | Purpose                                                       |
 | ---------------------- | ------------------------------------------------------------- |
 | `DOCKER_IMAGE_NAME`    | Image repository/name used by `docker-compose.yml`            |
@@ -264,6 +269,7 @@ Copy `.env.deploy.example` to `.env` before running compose in a deployment dire
 | `APP_ENV`              | Deployment environment; passed to the build as `VITE_APP_ENV` |
 | `VITE_API_BASE_URL`    | Build-time API base URL                                       |
 | `VITE_ADMIN_APP_ENTRY` | Build-time administrator sub-app entry URL                    |
+| `VITE_JCC_APP_ENTRY`   | Build-time JCC sub-app entry URL                              |
 
 ```bash
 pnpm docker:build

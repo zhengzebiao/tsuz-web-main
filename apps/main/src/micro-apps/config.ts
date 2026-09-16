@@ -1,6 +1,7 @@
 import {
   DEFAULT_ADMIN_APP_ENTRY,
   DEFAULT_API_BASE_URL,
+  DEFAULT_JCC_APP_ENTRY,
   matchesActiveRoute,
   microAppMetas,
   type AuthBridge,
@@ -18,7 +19,9 @@ export interface MicroAppRegistration {
   props: MicroAppProps;
 }
 
-export type MicroAppEnvironment = Partial<Record<"VITE_API_BASE_URL" | "VITE_ADMIN_APP_ENTRY", string | undefined>>;
+export type MicroAppEnvironment = Partial<
+  Record<"VITE_API_BASE_URL" | "VITE_ADMIN_APP_ENTRY" | "VITE_JCC_APP_ENTRY", string | undefined>
+>;
 
 export interface CreateMicroAppsOptions {
   env?: MicroAppEnvironment;
@@ -33,10 +36,16 @@ export function resolveApiBaseUrl(env: MicroAppEnvironment = readViteEnvironment
 }
 
 export function resolveMicroAppEntry(
-  _meta: MicroAppMeta = microAppMetas[0],
+  meta: MicroAppMeta = microAppMetas[0],
   env: MicroAppEnvironment = readViteEnvironment(),
-  _hostname = getDefaultHostname()
+  hostname?: string
 ) {
+  void hostname;
+
+  if (meta.name === "jcc") {
+    return env.VITE_JCC_APP_ENTRY?.trim() || DEFAULT_JCC_APP_ENTRY;
+  }
+
   return env.VITE_ADMIN_APP_ENTRY?.trim() || DEFAULT_ADMIN_APP_ENTRY;
 }
 

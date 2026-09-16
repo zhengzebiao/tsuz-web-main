@@ -8,8 +8,9 @@ import {
   ShoppingOutlined,
   TeamOutlined
 } from "@ant-design/icons";
-import { App, Card, Col, Row, Typography } from "antd";
+import { Card, Col, Row, Typography } from "antd";
 import type { ComponentType, CSSProperties } from "react";
+import { useNavigate } from "react-router-dom";
 import { subApps, type SubApp } from "../data/sub-apps";
 
 const iconMap: Record<string, ComponentType<{ style?: CSSProperties }>> = {
@@ -28,10 +29,10 @@ export interface AppGridProps {
 }
 
 export default function AppGrid({ apps = subApps }: AppGridProps) {
-  const { message } = App.useApp();
+  const navigate = useNavigate();
 
   const handleAppClick = (app: SubApp) => {
-    message.info(`${app.name}正在建设中，敬请期待`);
+    navigate(app.route);
   };
 
   return (

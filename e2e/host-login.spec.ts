@@ -39,9 +39,12 @@ test("logs in, visits the application center and can manage the profile", async 
   await page.getByRole("button", { name: /登\s*录/ }).click();
 
   await expect(page).toHaveURL(/\/apps$/);
-  await expect(page.getByRole("heading", { name: "应用中心" })).toBeVisible();
-  await expect(page.getByText("数据分析")).toBeVisible();
-  await expect(page.getByText("权限管理")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "金铲铲" })).toBeVisible();
+  await expect(page.locator(".app-card")).toHaveCount(1);
+
+  await page.getByRole("button", { name: /金铲铲/ }).click();
+  await expect(page).toHaveURL(/\/app\/jcc$/);
+  await expect(page.locator("#subapp-container")).toBeAttached();
 
   await page.getByRole("button", { name: `打开${testEmail}用户菜单` }).click();
   await page.getByText("个人中心").click();
@@ -100,7 +103,7 @@ test("registers with email verification and enters the application center", asyn
   await page.getByRole("button", { name: /注\s*册/ }).click();
 
   await expect(page).toHaveURL(/\/apps$/);
-  await expect(page.getByRole("heading", { name: "应用中心" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "金铲铲" })).toBeVisible();
   expect(codeBody).toEqual({ email: registerEmail });
   expect(registerBody).toEqual({
     email: registerEmail,
@@ -141,9 +144,9 @@ test("restores an unexpired session after reload without refreshing", async ({ p
   });
 
   await page.goto("/apps");
-  await expect(page.getByRole("heading", { name: "应用中心" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "金铲铲" })).toBeVisible();
   await page.reload();
-  await expect(page.getByRole("heading", { name: "应用中心" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "金铲铲" })).toBeVisible();
   await page.getByRole("button", { name: /打开reloaded@example\.com用户菜单/ }).click();
   await page.getByText("个人中心").click();
   await expect(page.getByRole("heading", { name: "reloaded@example.com" })).toBeVisible();

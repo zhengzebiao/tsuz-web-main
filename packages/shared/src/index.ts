@@ -43,8 +43,11 @@ export interface MicroAppProps extends AuthBridge {
 
 export const ADMIN_APP_ROUTE = "/app/admin";
 export const ADMIN_APP_BASENAME = ADMIN_APP_ROUTE;
+export const JCC_APP_ROUTE = "/app/jcc";
+export const JCC_APP_BASENAME = JCC_APP_ROUTE;
 export const DEFAULT_API_BASE_URL = "/api";
 export const DEFAULT_ADMIN_APP_ENTRY = "//127.0.0.1:7201/";
+export const DEFAULT_JCC_APP_ENTRY = "//127.0.0.1:7202/";
 
 export const adminAppMeta = {
   name: "admin",
@@ -54,7 +57,15 @@ export const adminAppMeta = {
   port: 7201
 } as const satisfies MicroAppMeta;
 
-export const microAppMetas = [adminAppMeta] as const satisfies readonly MicroAppMeta[];
+export const jccAppMeta = {
+  name: "jcc",
+  title: "金铲铲",
+  activeRule: JCC_APP_ROUTE,
+  basename: JCC_APP_BASENAME,
+  port: 7202
+} as const satisfies MicroAppMeta;
+
+export const microAppMetas = [adminAppMeta, jccAppMeta] as const satisfies readonly MicroAppMeta[];
 
 export type ClassValue = string | number | false | null | undefined | Record<string, boolean>;
 
