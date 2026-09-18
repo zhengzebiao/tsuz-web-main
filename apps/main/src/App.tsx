@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { Layout } from "antd";
 import { Navigate, Outlet, Route, Routes } from "react-router-dom";
+import AppFooter from "./components/AppFooter";
 import AppHeader from "./components/AppHeader";
 import RequireAuth from "./components/RequireAuth";
 import AppsPage from "./pages/AppsPage";
@@ -23,6 +24,7 @@ export default function App() {
         <Route index element={<Navigate to="/apps" replace />} />
         <Route path="apps" element={<AppsPage />} />
         <Route path="profile" element={<ProfilePage />} />
+        <Route path="app/admin" element={<Navigate to="/app/admin/users" replace />} />
         <Route path="app/admin/*" element={<MicroAppOutlet />} />
         <Route path="app/jcc/*" element={<MicroAppOutlet />} />
         <Route path="apps/mfe-app/*" element={<MicroAppOutlet />} />
@@ -39,6 +41,7 @@ function AuthenticatedShell() {
       <Content className="app-content">
         <Outlet />
       </Content>
+      <AppFooter />
     </Layout>
   );
 }
