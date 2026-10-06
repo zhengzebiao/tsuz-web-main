@@ -58,7 +58,7 @@ export default function AppGridV1({ apps = subApps }: AppGridProps) {
             <div className="app-card-icon-v1" style={{ backgroundColor: app.background, color: app.color }}>
               <Icon style={{ fontSize: 24 }} />
             </div>
-            <Typography.Title level={4}>{app.name}</Typography.Title>
+            <Typography.Title level={4}>{app.name}应用</Typography.Title>
           </Card>
         );
       })}
