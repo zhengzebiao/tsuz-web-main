@@ -683,9 +683,14 @@ a {
   .login-page-v1 { align-items: flex-start; padding: 24px 16px; }
   .login-form-panel-v1 { padding: 28px 20px; border-radius: 18px; }
   .app-page-main-v1 { padding: 32px 16px 40px; }
-  .app-header-v1 { padding: 0 16px; }
-  .app-header-actions-v1 { gap: 4px; }
+  .app-header-v1 { padding: 0 12px; }
+  .app-header-actions-v1 { gap: 2px; }
+  .app-admin-label-hidden-v1 { display: none; }
+  .admin-entry-button-v1 { padding-inline: 8px; }
+  .user-menu-trigger-v1 { padding-right: 4px; }
   .profile-summary-v1 { flex-direction: column; text-align: center; }
+  .profile-details-v1 .ant-descriptions-item-label { width: 104px; }
+  .profile-details-v1 .ant-descriptions-item-content { min-width: 0; overflow-wrap: anywhere; }
 }
 
 @media (max-width: 479px) {
@@ -695,6 +700,18 @@ a {
   .register-code-field-v1 { flex: 1 1 100%; }
   .register-code-button-v1 { width: 100%; margin: -8px 0 24px; }
   .app-brand-name-v1 { display: none; }
+  .login-auth-form-v1 .ant-form-item-label { flex: 0 0 64px; padding-right: 8px; }
+  .login-form-panel-v1 { width: 100%; }
+  .app-page-main-v1 { padding-inline: 12px; }
+  .profile-card-v1 .ant-card-body { padding: 20px 16px; }
+}
+
+@media (max-width: 359px) {
+  .app-header-v1 { padding-inline: 8px; }
+  .admin-entry-button-v1 { padding-inline: 4px; }
+  .app-page-main-v1 { padding-inline: 8px; }
+  .login-form-panel-v1 { padding-inline: 12px; }
+  .login-auth-form-v1 .ant-form-item-label { flex-basis: 56px; padding-right: 4px; }
 }
 
 .app-grid-v1 {

@@ -33,7 +33,7 @@ export default function AppHeaderV1() {
 
   const handleMenuClick: MenuProps["onClick"] = async ({ key }) => {
     if (key === "profile") {
-      navigate("/profile-v1");
+      navigate("/profile");
       return;
     }
 
@@ -46,7 +46,7 @@ export default function AppHeaderV1() {
       try {
         await logout();
       } finally {
-        navigate("/login-v1", { replace: true });
+        navigate("/login", { replace: true });
       }
     }
   };
@@ -55,7 +55,7 @@ export default function AppHeaderV1() {
     <>
       {contextHolder}
       <Header className="app-header-v1">
-      <Link className="app-brand-v1" to="/apps-v1" aria-label="返回应用中心">
+      <Link className="app-brand-v1" to="/apps" aria-label="返回应用中心">
         <span className="app-brand-mark-v1" aria-hidden="true">
           A
         </span>

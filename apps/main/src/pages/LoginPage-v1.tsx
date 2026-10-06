@@ -263,7 +263,7 @@ function getRedirectPath(state: unknown) {
     return state.from.pathname;
   }
 
-  return "/apps-v1";
+  return "/apps";
 }
 
 function isRedirectState(value: unknown): value is RedirectState {
